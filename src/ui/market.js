@@ -1,9 +1,11 @@
-import { ITEMS, LOCATIONS, LOC_BY_ID, itemsForScope, COUNT_BY_LOC } from '../data/inventory.js';
+import { ITEMS, CONTINENTS, COUNTRIES, COUNTRY_BY_ID, LOC_BY_ID, itemsForScope, COUNT_BY_COUNTRY } from '../data/inventory.js';
 import { productArt } from './art.js';
 
 const $ = (s) => document.querySelector(s);
 const money = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const continentOf = (country) => COUNTRY_BY_ID[country].continent;
+const countFor = (scope) => itemsForScope(scope).length;
 
 const store = {
   get(k, d) {
@@ -20,7 +22,7 @@ const store = {
   },
 };
 
-export function createMarket({ onFlyToLocation, onClose }) {
+export function createMarket({ onFlyToCountry, onFlyToContinent, onClose }) {
   const panel = $('#market');
   const grid = $('#grid');
   const crumbs = $('#crumbs');
@@ -33,9 +35,9 @@ export function createMarket({ onFlyToLocation, onClose }) {
   const bagList = $('#bag-list');
   const bagTotal = $('#bag-total');
   const toast = $('#toast');
+  const chips = $('#continents');
 
   let scope = { level: 'world' };
-  let anchorLoc = null;
   let cart = store.get('stc-bag', []).filter((id) => ITEMS.some((i) => i.id === id));
 
   function showToast(msg) {
@@ -45,82 +47,89 @@ export function createMarket({ onFlyToLocation, onClose }) {
     showToast.t = setTimeout(() => toast.classList.remove('show'), 2400);
   }
 
-  function renderCrumbs() {
-    const parts = [{ label: 'Earth', scope: { level: 'world' } }];
-    if (anchorLoc) {
-      parts.push({ label: anchorLoc.country, scope: { level: 'country', value: anchorLoc.country } });
-      if (anchorLoc.region !== anchorLoc.country && anchorLoc.region !== anchorLoc.city)
-        parts.push({ label: anchorLoc.region, scope: { level: 'region', value: `${anchorLoc.country}|${anchorLoc.region}` } });
-      parts.push({ label: anchorLoc.city, scope: { level: 'city', value: anchorLoc.id } });
-    }
-    crumbs.innerHTML = parts
-      .map((p, i) => {
-        const on = p.scope.level === scope.level && p.scope.value === scope.value;
-        return `<button class="crumb${on ? ' on' : ''}" data-i="${i}">${esc(p.label)}</button>`;
+  // Continent quick-nav (always visible)
+  chips.innerHTML =
+    `<button data-c="" class="on">All</button>` +
+    CONTINENTS.map((c) => `<button data-c="${esc(c.id)}">${esc(c.id)} <small>${countFor({ level: 'continent', value: c.id })}</small></button>`).join('');
+  chips.querySelectorAll('button').forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (!b.dataset.c) return onFlyToContinent(null);
+        onFlyToContinent(CONTINENTS.find((c) => c.id === b.dataset.c));
       })
-      .join('<span class="sep">›</span>');
-    crumbs.querySelectorAll('button').forEach((b) => (b.onclick = () => setScope(parts[+b.dataset.i].scope)));
+  );
+  function syncChips() {
+    const active = scope.level === 'world' ? '' : scope.level === 'continent' ? scope.value : continentOf(scope.value);
+    chips.querySelectorAll('button').forEach((b) => b.classList.toggle('on', panel.classList.contains('open') ? b.dataset.c === active : !b.dataset.c));
+  }
+
+  function renderCrumbs() {
+    const parts = [{ label: 'Earth', go: () => onFlyToContinent(null) }];
+    if (scope.level !== 'world') {
+      const cont = scope.level === 'continent' ? scope.value : continentOf(scope.value);
+      parts.push({ label: cont, go: () => onFlyToContinent(CONTINENTS.find((c) => c.id === cont)), on: scope.level === 'continent' });
+      if (scope.level === 'country') parts.push({ label: scope.value, go: () => {}, on: true });
+    } else parts[0].on = true;
+    crumbs.innerHTML = parts.map((p, i) => `<button class="crumb${p.on ? ' on' : ''}" data-i="${i}">${esc(p.label)}</button>`).join('<span class="sep">›</span>');
+    crumbs.querySelectorAll('button').forEach((b) => (b.onclick = parts[+b.dataset.i].go));
+  }
+
+  function renderCountryChips() {
+    // Inside a continent: one-tap jump to each country that has stock
+    const host = $('#country-chips');
+    if (scope.level !== 'continent') return (host.innerHTML = '');
+    host.innerHTML = COUNTRIES.filter((c) => c.continent === scope.value)
+      .map((c) => `<button data-c="${esc(c.id)}">${esc(c.id)} <small>${COUNT_BY_COUNTRY[c.id]}</small></button>`)
+      .join('');
+    host.querySelectorAll('button').forEach((b) => (b.onclick = () => onFlyToCountry(COUNTRY_BY_ID[b.dataset.c])));
   }
 
   function renderGrid() {
-    let items = itemsForScope(scope).slice();
+    const items = itemsForScope(scope).slice();
     const s = sortSel.value;
     if (s === 'low') items.sort((a, b) => a.price - b.price);
     else if (s === 'high') items.sort((a, b) => b.price - a.price);
     else if (s === 'old') items.sort((a, b) => a.year - b.year);
     else if (s === 'new') items.sort((a, b) => b.year - a.year);
 
-    const label =
-      scope.level === 'world'
-        ? 'Global Stock'
-        : scope.level === 'city'
-          ? LOC_BY_ID[scope.value].city
-          : scope.level === 'region'
-            ? scope.value.split('|')[1]
-            : scope.value;
-    title.textContent = label;
-    const cities = new Set(items.map((i) => i.locId)).size;
-    meta.textContent = `${items.length} piece${items.length === 1 ? '' : 's'} · ${cities} cit${cities === 1 ? 'y' : 'ies'}`;
+    title.textContent = scope.level === 'world' ? 'Global Stock' : scope.value;
+    const countries = new Set(items.map((i) => LOC_BY_ID[i.locId].country)).size;
+    meta.textContent = `${items.length} piece${items.length === 1 ? '' : 's'}${scope.level === 'country' ? '' : ` · ${countries} countr${countries === 1 ? 'y' : 'ies'}`}`;
 
     grid.innerHTML = items
       .map((it) => {
         const loc = LOC_BY_ID[it.locId];
         const inBag = cart.includes(it.id);
-        return `<article class="card" style="--c:${it.color};--a:${it.accent}">
+        return `<article class="card">
           <div class="art">${productArt(it)}<span class="cond">${esc(it.condition)}</span></div>
           <div class="body">
             <div class="row"><span class="brand">${esc(it.brand)}</span><span class="price">${money(it.price)}</span></div>
             <h3>${esc(it.name)}</h3>
+            <p class="where">📍 ${esc(loc.city)}, ${esc(loc.country)}</p>
             <p class="facts"><b>${it.year}</b> · ${esc(it.collection)} · by ${esc(it.designer)}</p>
             <p class="blurb">${esc(it.blurb)}</p>
-            <div class="row foot">
-              <button class="loc" data-loc="${loc.id}" title="Fly to ${esc(loc.city)}">◎ ${esc(loc.city)}, ${esc(loc.region === loc.city ? loc.country : loc.region)}</button>
-              <span class="size">Size ${esc(it.size)}</span>
-            </div>
+            <div class="row foot"><span class="size">Size ${esc(it.size)}</span></div>
             <button class="add${inBag ? ' in' : ''}" data-id="${it.id}">${inBag ? 'In Bag ✓' : 'Add to Bag'}</button>
           </div>
         </article>`;
       })
       .join('');
     grid.querySelectorAll('.add').forEach((b) => (b.onclick = () => toggleCart(b.dataset.id)));
-    grid.querySelectorAll('.loc').forEach((b) => (b.onclick = () => onFlyToLocation(LOC_BY_ID[b.dataset.loc])));
     grid.scrollTop = 0;
   }
 
-  function setScope(s) {
+  function open(s) {
     scope = s;
-    renderCrumbs();
-    renderGrid();
-  }
-
-  function openFor(loc) {
-    anchorLoc = loc;
     panel.classList.add('open');
-    setScope(loc ? { level: 'city', value: loc.id } : { level: 'world' });
+    renderCrumbs();
+    renderCountryChips();
+    renderGrid();
+    syncChips();
   }
 
   function close() {
     panel.classList.remove('open');
+    syncChips();
     onClose?.();
   }
 
@@ -147,40 +156,48 @@ export function createMarket({ onFlyToLocation, onClose }) {
     const items = cart.map((id) => ITEMS.find((i) => i.id === id));
     bagList.innerHTML = items.length
       ? items
-          .map(
-            (it) => `<li><div class="mini">${productArt(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(
-              LOC_BY_ID[it.locId].city
-            )} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`
-          )
+          .map((it) => {
+            const loc = LOC_BY_ID[it.locId];
+            return `<li><div class="mini">${productArt(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(loc.city)}, ${esc(
+              loc.country
+            )} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`;
+          })
           .join('')
-      : '<li class="empty">Your bag is empty. Spin the globe and pick a city.</li>';
+      : '<li class="empty">Your bag is empty. Spin the globe and pick a country.</li>';
     bagList.querySelectorAll('button').forEach((b) => (b.onclick = () => toggleCart(b.dataset.id)));
     bagTotal.textContent = money(items.reduce((s, i) => s + i.price, 0));
   }
 
-  // Atlas search (keyboard-friendly alternative to clicking the globe)
+  // Search: continents, countries, cities and brands all resolve to a country or continent
   const search = $('#search');
   const results = $('#results');
   function renderResults() {
     const q = search.value.trim().toLowerCase();
-    const list = LOCATIONS.filter((l) => !q || `${l.city} ${l.region} ${l.country}`.toLowerCase().includes(q))
-      .concat(
-        q
-          ? ITEMS.filter((i) => `${i.brand} ${i.name} ${i.designer} ${i.collection}`.toLowerCase().includes(q))
-              .map((i) => LOC_BY_ID[i.locId])
-          : []
-      )
-      .filter((l, i, arr) => arr.indexOf(l) === i)
-      .slice(0, 8);
-    results.innerHTML = list
-      .map((l) => `<li><button data-loc="${l.id}"><span>${esc(l.city)}</span><small>${esc(l.region)}, ${esc(l.country)} · ${COUNT_BY_LOC[l.id]}</small></button></li>`)
+    const out = [];
+    const seen = new Set();
+    const add = (kind, id, sub) => {
+      const key = kind + id;
+      if (!seen.has(key)) seen.add(key), out.push({ kind, id, sub });
+    };
+    CONTINENTS.filter((c) => !q || c.id.toLowerCase().includes(q)).forEach((c) => add('continent', c.id, `${countFor({ level: 'continent', value: c.id })} pieces`));
+    if (q) {
+      COUNTRIES.filter((c) => c.id.toLowerCase().includes(q)).forEach((c) => add('country', c.id, `${c.continent} · ${COUNT_BY_COUNTRY[c.id]} pieces`));
+      ITEMS.filter((i) => `${i.brand} ${i.name} ${i.designer} ${i.collection} ${LOC_BY_ID[i.locId].city}`.toLowerCase().includes(q)).forEach((i) => {
+        const c = LOC_BY_ID[i.locId].country;
+        add('country', c, `${continentOf(c)} · ${COUNT_BY_COUNTRY[c]} pieces`);
+      });
+    }
+    results.innerHTML = out
+      .slice(0, 8)
+      .map((r) => `<li><button data-kind="${r.kind}" data-id="${esc(r.id)}"><span>${esc(r.id)}</span><small>${esc(r.sub)}</small></button></li>`)
       .join('');
     results.querySelectorAll('button').forEach(
       (b) =>
         (b.onclick = () => {
           results.classList.remove('show');
           search.blur();
-          onFlyToLocation(LOC_BY_ID[b.dataset.loc]);
+          if (b.dataset.kind === 'country') onFlyToCountry(COUNTRY_BY_ID[b.dataset.id]);
+          else onFlyToContinent(CONTINENTS.find((c) => c.id === b.dataset.id));
         })
     );
   }
@@ -200,8 +217,8 @@ export function createMarket({ onFlyToLocation, onClose }) {
   $('#bag-close').onclick = () => bag.classList.remove('open');
   $('#checkout').onclick = () =>
     showToast(cart.length ? 'Checkout is not connected yet — hook up Stripe to go live.' : 'Add something to your bag first.');
-  $('#shop-all').onclick = () => openFor(null);
+  $('#shop-all').onclick = () => open({ level: 'world' });
 
   renderBag();
-  return { openFor, close, showToast, isOpen: () => panel.classList.contains('open') };
+  return { open, close, showToast, isOpen: () => panel.classList.contains('open') };
 }

@@ -1,43 +1,79 @@
 // Inventory source of truth. Swap this file (or fetch JSON from an API) to update stock.
 // Each location is a pin on the globe; items reference a location by id.
 
+// Navigation is continent → country. Cities only appear on product cards.
+export const CONTINENTS = [
+  { id: 'North America', lat: 42, lng: -100 },
+  { id: 'South America', lat: -15, lng: -58 },
+  { id: 'Europe', lat: 50, lng: 10 },
+  { id: 'Africa', lat: 4, lng: 18 },
+  { id: 'Asia', lat: 32, lng: 105 },
+  { id: 'Oceania', lat: -27, lng: 140 },
+];
+
+// Beacon position per country (visual centre of where stock comes from)
+export const COUNTRIES = [
+  { id: 'United States', continent: 'North America', lat: 39.5, lng: -98.5 },
+  { id: 'Canada', continent: 'North America', lat: 52, lng: -100 },
+  { id: 'Mexico', continent: 'North America', lat: 23.6, lng: -102.5 },
+  { id: 'Brazil', continent: 'South America', lat: -10, lng: -52 },
+  { id: 'United Kingdom', continent: 'Europe', lat: 54, lng: -2.5 },
+  { id: 'France', continent: 'Europe', lat: 46.6, lng: 2.4 },
+  { id: 'Belgium', continent: 'Europe', lat: 50.6, lng: 4.6 },
+  { id: 'Netherlands', continent: 'Europe', lat: 52.3, lng: 5.5 },
+  { id: 'Italy', continent: 'Europe', lat: 42.8, lng: 12.5 },
+  { id: 'Germany', continent: 'Europe', lat: 51.1, lng: 10.4 },
+  { id: 'Sweden', continent: 'Europe', lat: 62, lng: 15 },
+  { id: 'Nigeria', continent: 'Africa', lat: 9.1, lng: 8.7 },
+  { id: 'South Africa', continent: 'Africa', lat: -29, lng: 24.7 },
+  { id: 'United Arab Emirates', continent: 'Asia', lat: 24, lng: 54 },
+  { id: 'India', continent: 'Asia', lat: 22, lng: 79 },
+  { id: 'China', continent: 'Asia', lat: 35.9, lng: 104.2 },
+  { id: 'Hong Kong SAR', continent: 'Asia', lat: 22.3, lng: 114.2 },
+  { id: 'South Korea', continent: 'Asia', lat: 36.5, lng: 127.9 },
+  { id: 'Japan', continent: 'Asia', lat: 36.2, lng: 138.3 },
+  { id: 'Australia', continent: 'Oceania', lat: -25.3, lng: 133.8 },
+];
+export const COUNTRY_BY_ID = Object.fromEntries(COUNTRIES.map((c) => [c.id, c]));
+
+// Cities (shown under each piece in the marketplace)
 export const LOCATIONS = [
-  { id: 'nyc', city: 'New York City', region: 'New York', country: 'United States', lat: 40.7128, lng: -74.006 },
-  { id: 'la', city: 'Los Angeles', region: 'California', country: 'United States', lat: 34.0522, lng: -118.2437 },
-  { id: 'laguna', city: 'Laguna Beach', region: 'California', country: 'United States', lat: 33.5427, lng: -117.7854 },
-  { id: 'beaverton', city: 'Beaverton', region: 'Oregon', country: 'United States', lat: 45.4871, lng: -122.8037 },
-  { id: 'chicago', city: 'Chicago', region: 'Illinois', country: 'United States', lat: 41.8781, lng: -87.6298 },
-  { id: 'atl', city: 'Atlanta', region: 'Georgia', country: 'United States', lat: 33.749, lng: -84.388 },
-  { id: 'honolulu', city: 'Honolulu', region: 'Hawaii', country: 'United States', lat: 21.3069, lng: -157.8583 },
-  { id: 'toronto', city: 'Toronto', region: 'Ontario', country: 'Canada', lat: 43.6532, lng: -79.3832 },
-  { id: 'montreal', city: 'Montréal', region: 'Québec', country: 'Canada', lat: 45.5017, lng: -73.5673 },
-  { id: 'vancouver', city: 'Vancouver', region: 'British Columbia', country: 'Canada', lat: 49.2827, lng: -123.1207 },
-  { id: 'cdmx', city: 'Mexico City', region: 'Ciudad de México', country: 'Mexico', lat: 19.4326, lng: -99.1332 },
-  { id: 'rio', city: 'Rio de Janeiro', region: 'Rio de Janeiro', country: 'Brazil', lat: -22.9068, lng: -43.1729 },
-  { id: 'london', city: 'London', region: 'England', country: 'United Kingdom', lat: 51.5074, lng: -0.1278 },
-  { id: 'castleford', city: 'Castleford', region: 'England', country: 'United Kingdom', lat: 53.7253, lng: -1.3625 },
-  { id: 'stornoway', city: 'Stornoway', region: 'Scotland', country: 'United Kingdom', lat: 58.209, lng: -6.3849 },
-  { id: 'paris', city: 'Paris', region: 'Île-de-France', country: 'France', lat: 48.8566, lng: 2.3522 },
-  { id: 'antwerp', city: 'Antwerp', region: 'Flanders', country: 'Belgium', lat: 51.2194, lng: 4.4025 },
-  { id: 'amsterdam', city: 'Amsterdam', region: 'North Holland', country: 'Netherlands', lat: 52.3676, lng: 4.9041 },
-  { id: 'milan', city: 'Milan', region: 'Lombardy', country: 'Italy', lat: 45.4642, lng: 9.19 },
-  { id: 'florence', city: 'Florence', region: 'Tuscany', country: 'Italy', lat: 43.7696, lng: 11.2558 },
-  { id: 'ravarino', city: 'Ravarino', region: 'Emilia-Romagna', country: 'Italy', lat: 44.7239, lng: 11.0966 },
-  { id: 'berlin', city: 'Berlin', region: 'Berlin', country: 'Germany', lat: 52.52, lng: 13.405 },
-  { id: 'herzo', city: 'Herzogenaurach', region: 'Bavaria', country: 'Germany', lat: 49.5672, lng: 10.8858 },
-  { id: 'stockholm', city: 'Stockholm', region: 'Stockholm County', country: 'Sweden', lat: 59.3293, lng: 18.0686 },
-  { id: 'lagos', city: 'Lagos', region: 'Lagos State', country: 'Nigeria', lat: 6.5244, lng: 3.3792 },
-  { id: 'jozi', city: 'Johannesburg', region: 'Gauteng', country: 'South Africa', lat: -26.2041, lng: 28.0473 },
-  { id: 'dubai', city: 'Dubai', region: 'Dubai', country: 'United Arab Emirates', lat: 25.2048, lng: 55.2708 },
-  { id: 'kolkata', city: 'Kolkata', region: 'West Bengal', country: 'India', lat: 22.5726, lng: 88.3639 },
-  { id: 'tokyo', city: 'Tokyo', region: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503 },
-  { id: 'kojima', city: 'Kojima', region: 'Okayama', country: 'Japan', lat: 34.4597, lng: 133.8056 },
-  { id: 'osaka', city: 'Osaka', region: 'Osaka', country: 'Japan', lat: 34.6937, lng: 135.5023 },
-  { id: 'seoul', city: 'Seoul', region: 'Seoul', country: 'South Korea', lat: 37.5665, lng: 126.978 },
-  { id: 'beijing', city: 'Beijing', region: 'Beijing', country: 'China', lat: 39.9042, lng: 116.4074 },
-  { id: 'hk', city: 'Hong Kong', region: 'Hong Kong', country: 'Hong Kong SAR', lat: 22.3193, lng: 114.1694 },
-  { id: 'sydney', city: 'Sydney', region: 'New South Wales', country: 'Australia', lat: -33.8688, lng: 151.2093 },
-  { id: 'torquay', city: 'Torquay', region: 'Victoria', country: 'Australia', lat: -38.3309, lng: 144.3266 },
+  { id: 'nyc', city: 'New York City', country: 'United States', lat: 40.7128, lng: -74.006 },
+  { id: 'la', city: 'Los Angeles', country: 'United States', lat: 34.0522, lng: -118.2437 },
+  { id: 'laguna', city: 'Laguna Beach', country: 'United States', lat: 33.5427, lng: -117.7854 },
+  { id: 'beaverton', city: 'Beaverton', country: 'United States', lat: 45.4871, lng: -122.8037 },
+  { id: 'chicago', city: 'Chicago', country: 'United States', lat: 41.8781, lng: -87.6298 },
+  { id: 'atl', city: 'Atlanta', country: 'United States', lat: 33.749, lng: -84.388 },
+  { id: 'honolulu', city: 'Honolulu', country: 'United States', lat: 21.3069, lng: -157.8583 },
+  { id: 'toronto', city: 'Toronto', country: 'Canada', lat: 43.6532, lng: -79.3832 },
+  { id: 'montreal', city: 'Montréal', country: 'Canada', lat: 45.5017, lng: -73.5673 },
+  { id: 'vancouver', city: 'Vancouver', country: 'Canada', lat: 49.2827, lng: -123.1207 },
+  { id: 'cdmx', city: 'Mexico City', country: 'Mexico', lat: 19.4326, lng: -99.1332 },
+  { id: 'rio', city: 'Rio de Janeiro', country: 'Brazil', lat: -22.9068, lng: -43.1729 },
+  { id: 'london', city: 'London', country: 'United Kingdom', lat: 51.5074, lng: -0.1278 },
+  { id: 'castleford', city: 'Castleford', country: 'United Kingdom', lat: 53.7253, lng: -1.3625 },
+  { id: 'stornoway', city: 'Stornoway', country: 'United Kingdom', lat: 58.209, lng: -6.3849 },
+  { id: 'paris', city: 'Paris', country: 'France', lat: 48.8566, lng: 2.3522 },
+  { id: 'antwerp', city: 'Antwerp', country: 'Belgium', lat: 51.2194, lng: 4.4025 },
+  { id: 'amsterdam', city: 'Amsterdam', country: 'Netherlands', lat: 52.3676, lng: 4.9041 },
+  { id: 'milan', city: 'Milan', country: 'Italy', lat: 45.4642, lng: 9.19 },
+  { id: 'florence', city: 'Florence', country: 'Italy', lat: 43.7696, lng: 11.2558 },
+  { id: 'ravarino', city: 'Ravarino', country: 'Italy', lat: 44.7239, lng: 11.0966 },
+  { id: 'berlin', city: 'Berlin', country: 'Germany', lat: 52.52, lng: 13.405 },
+  { id: 'herzo', city: 'Herzogenaurach', country: 'Germany', lat: 49.5672, lng: 10.8858 },
+  { id: 'stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.3293, lng: 18.0686 },
+  { id: 'lagos', city: 'Lagos', country: 'Nigeria', lat: 6.5244, lng: 3.3792 },
+  { id: 'jozi', city: 'Johannesburg', country: 'South Africa', lat: -26.2041, lng: 28.0473 },
+  { id: 'dubai', city: 'Dubai', country: 'United Arab Emirates', lat: 25.2048, lng: 55.2708 },
+  { id: 'kolkata', city: 'Kolkata', country: 'India', lat: 22.5726, lng: 88.3639 },
+  { id: 'tokyo', city: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503 },
+  { id: 'kojima', city: 'Kojima', country: 'Japan', lat: 34.4597, lng: 133.8056 },
+  { id: 'osaka', city: 'Osaka', country: 'Japan', lat: 34.6937, lng: 135.5023 },
+  { id: 'seoul', city: 'Seoul', country: 'South Korea', lat: 37.5665, lng: 126.978 },
+  { id: 'beijing', city: 'Beijing', country: 'China', lat: 39.9042, lng: 116.4074 },
+  { id: 'hk', city: 'Hong Kong', country: 'Hong Kong SAR', lat: 22.3193, lng: 114.1694 },
+  { id: 'sydney', city: 'Sydney', country: 'Australia', lat: -33.8688, lng: 151.2093 },
+  { id: 'torquay', city: 'Torquay', country: 'Australia', lat: -38.3309, lng: 144.3266 },
 ];
 
 // [locId, name, brand, type, price, size, condition, year, collection, designer, blurb, primary, accent]
@@ -117,14 +153,16 @@ export const ITEMS = RAW.map((r, i) => ({
 export const LOC_BY_ID = Object.fromEntries(LOCATIONS.map((l) => [l.id, l]));
 
 export function itemsForScope(scope) {
-  // scope: { level: 'world'|'country'|'region'|'city', value }
+  // scope: { level: 'world' | 'continent' | 'country', value }
   if (!scope || scope.level === 'world') return ITEMS;
   return ITEMS.filter((it) => {
-    const loc = LOC_BY_ID[it.locId];
-    if (scope.level === 'city') return loc.id === scope.value;
-    if (scope.level === 'region') return `${loc.country}|${loc.region}` === scope.value;
-    return loc.country === scope.value;
+    const country = LOC_BY_ID[it.locId].country;
+    return scope.level === 'country' ? country === scope.value : COUNTRY_BY_ID[country].continent === scope.value;
   });
 }
 
-export const COUNT_BY_LOC = ITEMS.reduce((m, it) => ((m[it.locId] = (m[it.locId] || 0) + 1), m), {});
+export const COUNT_BY_COUNTRY = ITEMS.reduce((m, it) => {
+  const c = LOC_BY_ID[it.locId].country;
+  m[c] = (m[c] || 0) + 1;
+  return m;
+}, {});

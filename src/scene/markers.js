@@ -15,19 +15,19 @@ export function createMarkers(parent, locations, counts) {
   const normals = locations.map((l) => latLngToVec3(l.lat, l.lng, 1));
   const maxCount = Math.max(...Object.values(counts));
 
-  const beamGeo = new THREE.CylinderGeometry(0.0035, 0.0035, 1, 6, 1, true).translate(0, 0.5, 0);
+  const beamGeo = new THREE.CylinderGeometry(0.005, 0.005, 1, 6, 1, true).translate(0, 0.5, 0);
   const beams = new THREE.InstancedMesh(
     beamGeo,
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }),
     n
   );
-  const hitGeo = new THREE.SphereGeometry(0.03, 8, 6);
+  const hitGeo = new THREE.SphereGeometry(0.055, 8, 6);
   const hits = new THREE.InstancedMesh(hitGeo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }), n);
 
   const heights = [];
   locations.forEach((loc, i) => {
     const nrm = normals[i];
-    const h = 0.05 + 0.12 * ((counts[loc.id] || 1) / maxCount);
+    const h = 0.06 + 0.14 * ((counts[loc.id] || 1) / maxCount);
     heights.push(h);
     q.setFromUnitVectors(up, nrm);
     m.compose(nrm.clone().multiplyScalar(EARTH_RADIUS), q, s.set(1, h, 1));

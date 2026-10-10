@@ -2,37 +2,40 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import './style.css';
 import { createEarth, latLngToVec3 } from './scene/earth.js';
-import { createSolarSystem, EARTH_ORBIT } from './scene/solar.js';
 import { createMarkers } from './scene/markers.js';
 import { createMarket } from './ui/market.js';
-import { LOCATIONS, COUNT_BY_LOC } from './data/inventory.js';
+import { COUNTRIES, COUNT_BY_COUNTRY } from './data/inventory.js';
 
 const $ = (s) => document.querySelector(s);
 const canvas = $('#scene');
 const isTouch = matchMedia('(pointer: coarse)').matches;
 
 // ---------- Renderer / camera ----------
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', alpha: false });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 const MAX_PR = Math.min(window.devicePixelRatio || 1, isTouch ? 1.75 : 2);
 let pixelRatio = MAX_PR;
 let prCeiling = MAX_PR;
 renderer.setPixelRatio(pixelRatio);
 renderer.setSize(innerWidth, innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#02030a');
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.5, 6000);
-camera.position.set(0, 520, 1100);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
+const START = latLngToVec3(25, -40, 1).multiplyScalar(9); // open over the Atlantic
+camera.position.copy(START);
+
+const FULL_DIST = 3.4;
+const CONTINENT_DIST = 2.6;
+const COUNTRY_DIST = 2.0;
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.enablePan = false;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.25;
+controls.minDistance = 1.15;
+controls.maxDistance = 6;
+controls.autoRotateSpeed = 0.35;
 controls.enabled = false;
 
 // ---------- Loading ----------
@@ -40,62 +43,40 @@ const manager = new THREE.LoadingManager();
 const loader = new THREE.TextureLoader(manager);
 manager.onProgress = (_, done, total) => ($('#load-bar').style.width = `${(done / total) * 100}%`);
 
-// ---------- Sky ----------
+// ---------- Sky + Earth ----------
 const skyTex = loader.load('textures/stars.jpg');
 skyTex.colorSpace = THREE.SRGBColorSpace;
 const sky = new THREE.Mesh(
-  new THREE.SphereGeometry(4000, 48, 24),
+  new THREE.SphereGeometry(50, 48, 24),
   new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, depthWrite: false, depthTest: false, color: 0x8a8fa8 })
 );
 sky.renderOrder = -1;
 sky.raycast = () => {};
 scene.add(sky);
 
-// ---------- Solar system + Earth ----------
-const solar = createSolarSystem(scene);
 const earth = createEarth(loader, renderer);
-const earthPivot = new THREE.Group();
-earthPivot.rotation.y = -0.9;
-earth.group.position.x = EARTH_ORBIT;
-earthPivot.add(earth.group);
-solar.root.add(earthPivot);
-earth.group.add(solar.moonPivot);
-const markers = createMarkers(earth.spin, LOCATIONS, COUNT_BY_LOC);
-markers.setVisible(false);
-
-// ---------- State ----------
-let mode = 'intro'; // intro | solar | earth | transit
-let orbitsOn = true;
-let activeIdx = -1;
-let lastInteraction = performance.now();
-const earthCenter = new THREE.Vector3();
-const sunDirTmp = new THREE.Vector3();
-const SOLAR_VIEW = new THREE.Vector3(0, 150, 270);
-const EARTH_DIST = 3.4;
-const CITY_DIST = 2.0;
+scene.add(earth.group);
+const markers = createMarkers(earth.group, COUNTRIES, COUNT_BY_COUNTRY);
 
 // ---------- Tweens (one camera tween at a time) ----------
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 let camTween = null;
 const tweens = new Set();
-function tween(dur, fn, { exclusive = false } = {}) {
+function tween(dur, fn) {
   return new Promise((res) => {
-    const tw = { t: 0, dur, fn, res, cancelled: false };
-    if (exclusive) {
-      if (camTween) {
-        tweens.delete(camTween);
-        camTween.res(false);
-      }
-      camTween = tw;
+    if (camTween) {
+      tweens.delete(camTween);
+      camTween.res(false);
     }
-    tweens.add(tw);
+    camTween = { t: 0, dur, fn, res };
+    tweens.add(camTween);
   });
 }
 function stepTweens(dt) {
   for (const tw of tweens) {
     tw.t += dt;
     const k = Math.min(tw.t / tw.dur, 1);
-    tw.fn(ease(k), k);
+    tw.fn(ease(k));
     if (k >= 1) {
       tweens.delete(tw);
       if (tw === camTween) camTween = null;
@@ -104,14 +85,74 @@ function stepTweens(dt) {
   }
 }
 
-// ---------- View offset so the globe stays centred in the space beside the panel ----------
+// Arc the camera around the globe (never through it) to a direction + distance
+const ORIGIN = new THREE.Vector3();
+async function flyTo(endDir, endR) {
+  const startDir = camera.position.clone().normalize();
+  const startR = camera.position.length();
+  const angle = startDir.angleTo(endDir);
+  const q = new THREE.Quaternion().setFromUnitVectors(startDir, endDir);
+  const qi = new THREE.Quaternion();
+  const ident = new THREE.Quaternion();
+  const dir = new THREE.Vector3();
+  controls.enabled = false;
+  const done = await tween(Math.min(2.4, 1.0 + angle * 0.5), (e) => {
+    qi.slerpQuaternions(ident, q, e);
+    dir.copy(startDir).applyQuaternion(qi);
+    camera.position.copy(dir).multiplyScalar(THREE.MathUtils.lerp(startR, endR, e) + Math.sin(Math.PI * e) * angle * 0.5);
+    camera.lookAt(ORIGIN);
+  });
+  if (done) controls.enabled = true;
+  return done;
+}
+
+// ---------- Navigation: continent → country ----------
+let activeIdx = -1;
+let lastInteraction = performance.now();
+
+function flyToCountry(country) {
+  if (!country) return;
+  lastInteraction = performance.now();
+  activeIdx = COUNTRIES.indexOf(country);
+  markers.setActive(activeIdx);
+  market.open({ level: 'country', value: country.id });
+  flyTo(markers.normals[activeIdx].clone(), COUNTRY_DIST);
+}
+
+function flyToContinent(cont) {
+  lastInteraction = performance.now();
+  activeIdx = -1;
+  markers.setActive(-1);
+  if (!cont) {
+    market.close();
+    return flyTo(camera.position.clone().normalize(), FULL_DIST);
+  }
+  market.open({ level: 'continent', value: cont.id });
+  flyTo(latLngToVec3(cont.lat, cont.lng, 1), CONTINENT_DIST);
+}
+
+const market = createMarket({
+  onFlyToCountry: flyToCountry,
+  onFlyToContinent: flyToContinent,
+  onClose: () => {
+    activeIdx = -1;
+    markers.setActive(-1);
+  },
+});
+
+$('#btn-zoomout').onclick = () => flyToContinent(null);
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if ($('#bag').classList.contains('open')) $('#bag').classList.remove('open');
+  else flyToContinent(null);
+});
+
+// ---------- View offset so the globe stays centred beside the panel ----------
 let viewShift = 0;
 function applyViewOffset(dt) {
   const w = innerWidth;
   const h = innerHeight;
-  const panelOpen = market?.isOpen();
-  const target = panelOpen ? 1 : 0;
-  viewShift += (target - viewShift) * (1 - Math.exp(-dt * 7));
+  viewShift += ((market.isOpen() ? 1 : 0) - viewShift) * (1 - Math.exp(-dt * 7));
   if (Math.abs(viewShift) < 0.001) {
     if (camera.view?.enabled) camera.clearViewOffset();
     return;
@@ -122,216 +163,23 @@ function applyViewOffset(dt) {
   camera.setViewOffset(w, h, (panelW / 2) * viewShift, (panelH / 2) * viewShift, w, h);
 }
 
-function fadeOrbits(to) {
-  const from = solar.ringMat.opacity;
-  tween(1.2, (k) => {
-    solar.ringMat.opacity = THREE.MathUtils.lerp(from, to, k);
-    solar.ringMat.visible = solar.ringMat.opacity > 0.005;
-  });
-}
-
-function setNear(n) {
-  camera.near = n;
-  camera.updateProjectionMatrix();
-}
-
-function earthWorldCenter() {
-  return earth.group.getWorldPosition(earthCenter);
-}
-
-function locWorldDir(i, target = new THREE.Vector3()) {
-  return target.copy(markers.normals[i]).transformDirection(earth.spin.matrixWorld);
-}
-
-// ---------- Mode transitions ----------
-let enterPromise = null;
-function enterEarth() {
-  if (mode === 'earth') return Promise.resolve();
-  if (enterPromise) return enterPromise;
-  if (mode === 'transit') return Promise.resolve();
-  enterPromise = doEnterEarth().finally(() => (enterPromise = null));
-  return enterPromise;
-}
-async function doEnterEarth() {
-  mode = 'transit';
-  setHud('transit');
-  orbitsOn = false;
-  controls.enabled = false;
-  controls.autoRotate = false;
-  fadeOrbits(0);
-  setNear(0.01);
-  markers.setVisible(true);
-  const C = earthWorldCenter().clone();
-  const sunward = new THREE.Vector3().sub(C).normalize();
-  const endPos = C.clone().add(sunward.add(new THREE.Vector3(0, 0.35, 0)).normalize().multiplyScalar(EARTH_DIST));
-  const p0 = camera.position.clone();
-  const t0 = controls.target.clone();
-  const arc = Math.min(60, p0.distanceTo(endPos) * 0.15);
-  const done = await tween(
-    3.2,
-    (e) => {
-      controls.target.lerpVectors(t0, C, Math.min(1, e * 1.4));
-      camera.position.lerpVectors(p0, endPos, e).y += Math.sin(Math.PI * e) * arc;
-      camera.lookAt(controls.target);
-    },
-    { exclusive: true }
-  );
-  if (!done) return;
-  controls.target.copy(C);
-  controls.minDistance = 1.12;
-  controls.maxDistance = 9;
-  controls.enabled = true;
-  mode = 'earth';
-  setHud('earth');
-}
-
-async function exitToSolar() {
-  if (mode !== 'earth') return;
-  market.close();
-  setActive(-1);
-  mode = 'transit';
-  setHud('transit');
-  controls.enabled = false;
-  const p0 = camera.position.clone();
-  const t0 = controls.target.clone();
-  const done = await tween(
-    3,
-    (e) => {
-      controls.target.lerpVectors(t0, solar.sun.position, e);
-      camera.position.lerpVectors(p0, SOLAR_VIEW, e).y += Math.sin(Math.PI * e) * 30;
-      camera.lookAt(controls.target);
-    },
-    { exclusive: true }
-  );
-  if (!done) return;
-  markers.setVisible(false);
-  fadeOrbits(0.18);
-  setNear(0.5);
-  controls.target.set(0, 0, 0);
-  controls.minDistance = 25;
-  controls.maxDistance = 900;
-  controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.25;
-  controls.enabled = true;
-  orbitsOn = true;
-  mode = 'solar';
-  setHud('solar');
-}
-
-async function flyToLocation(loc) {
-  if (!loc) return;
-  const i = LOCATIONS.indexOf(loc);
-  if (mode !== 'earth') await enterEarth();
-  if (mode !== 'earth') return;
-  lastInteraction = performance.now();
-  setActive(i);
-  market.openFor(loc);
-  const C = earthCenter;
-  const startDir = camera.position.clone().sub(C);
-  const startR = startDir.length();
-  startDir.normalize();
-  const endDir = locWorldDir(i);
-  const angle = startDir.angleTo(endDir);
-  const q = new THREE.Quaternion().setFromUnitVectors(startDir, endDir);
-  const qi = new THREE.Quaternion();
-  const ident = new THREE.Quaternion();
-  const dir = new THREE.Vector3();
-  controls.enabled = false;
-  const done = await tween(
-    Math.min(2.6, 1.1 + angle * 0.55),
-    (e) => {
-      qi.slerpQuaternions(ident, q, e);
-      dir.copy(startDir).applyQuaternion(qi);
-      const r = THREE.MathUtils.lerp(startR, CITY_DIST, e) + Math.sin(Math.PI * e) * angle * 0.6;
-      camera.position.copy(C).addScaledVector(dir, r);
-      camera.lookAt(C);
-    },
-    { exclusive: true }
-  );
-  if (done) controls.enabled = mode === 'earth';
-}
-
-async function zoomOutFull() {
-  if (mode !== 'earth') return enterEarth();
-  market.close();
-  setActive(-1);
-  const C = earthCenter;
-  const dir = camera.position.clone().sub(C);
-  const r0 = dir.length();
-  dir.normalize();
-  controls.enabled = false;
-  const done = await tween(
-    1.4,
-    (e) => {
-      camera.position.copy(C).addScaledVector(dir, THREE.MathUtils.lerp(r0, EARTH_DIST, e));
-      camera.lookAt(C);
-    },
-    { exclusive: true }
-  );
-  if (done) controls.enabled = mode === 'earth';
-}
-
-function setActive(i) {
-  activeIdx = i;
-  markers.setActive(i);
-}
-
-// ---------- UI wiring ----------
-const market = createMarket({
-  onFlyToLocation: flyToLocation,
-  onClose: () => setActive(-1),
-});
-
-const hint = $('#hint');
-function setHud(m) {
-  document.body.dataset.mode = m;
-  $('#btn-system').textContent = m === 'solar' ? '◉ Land on Earth' : '☉ Solar System';
-  hint.textContent =
-    m === 'solar'
-      ? 'Drag to orbit the system · Click Earth to land · Planets have secret drops'
-      : m === 'earth'
-        ? 'Drag to spin · Scroll / pinch to zoom · Tap a beacon to shop that city'
-        : '';
-}
-
-$('#btn-system').onclick = () => (mode === 'solar' || mode === 'intro' ? enterEarth() : exitToSolar());
-$('#btn-zoomout').onclick = zoomOutFull;
-$('#btn-light').onclick = (e) => {
-  const on = earth.uniforms.dayOnly.value < 0.5;
-  e.currentTarget.classList.toggle('on', on);
-  e.currentTarget.textContent = on ? '☀ Daylight' : '☾ Real Time';
-  const from = earth.uniforms.dayOnly.value;
-  tween(0.8, (k) => (earth.uniforms.dayOnly.value = THREE.MathUtils.lerp(from, on ? 1 : 0, k)));
-};
-$('#enter').onclick = () => {
-  $('#hero').classList.add('gone');
-  enterEarth();
-};
-$('#explore').onclick = () => $('#hero').classList.add('gone');
-
-addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if ($('#bag').classList.contains('open')) $('#bag').classList.remove('open');
-    else if (market.isOpen()) market.close();
-    else if (mode === 'earth') zoomOutFull();
-  }
-});
-
 // ---------- Picking ----------
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
+const earthSphere = new THREE.Sphere(ORIGIN, 1);
+const hitList = [];
+const tmpV = new THREE.Vector3();
 let pointerDirty = false;
 let pointerInside = false;
 let hoverIdx = -1;
-let hoverPlanet = null;
 let down = null;
 const tip = $('#tip');
 
+const setNdc = (e) => ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
 canvas.addEventListener('pointermove', (e) => {
-  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  setNdc(e);
   tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`;
-  pointerDirty = true;
-  pointerInside = true;
+  pointerDirty = pointerInside = true;
 });
 canvas.addEventListener('pointerleave', () => {
   pointerInside = false;
@@ -340,144 +188,62 @@ canvas.addEventListener('pointerleave', () => {
 canvas.addEventListener('pointerdown', (e) => {
   down = { x: e.clientX, y: e.clientY, t: performance.now() };
   lastInteraction = performance.now();
-  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  pointerDirty = true;
-  if (mode === 'intro') $('#hero').classList.add('gone');
 });
 canvas.addEventListener('pointerup', (e) => {
   if (!down) return;
-  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
-  const quick = performance.now() - down.t < 450;
+  const tap = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 8 && performance.now() - down.t < 450;
   down = null;
-  if (moved > 7 || !quick) return;
-  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  if (!tap) return;
+  setNdc(e);
   pick(true);
-  if (mode === 'earth' && hoverIdx >= 0) flyToLocation(LOCATIONS[hoverIdx]);
-  else if ((mode === 'solar' || mode === 'intro') && hoverPlanet) {
-    if (hoverPlanet === 'Earth') enterEarth();
-    else {
-      const p = hoverPlanet.userData.planet;
-      market.showToast(`${p.name} — “${p.drop}” drops soon. Stay tuned.`);
-    }
-  }
+  if (hoverIdx >= 0) flyToCountry(COUNTRIES[hoverIdx]);
 });
+canvas.addEventListener('wheel', () => (lastInteraction = performance.now()), { passive: true });
 
-// Pull out past max zoom on Earth to return to the solar system
-let pullOut = 0;
-canvas.addEventListener(
-  'wheel',
-  (e) => {
-    lastInteraction = performance.now();
-    if (mode !== 'earth' || e.deltaY <= 0) return (pullOut = 0);
-    if (camera.position.distanceTo(earthCenter) > controls.maxDistance * 0.97) {
-      pullOut += e.deltaY;
-      if (pullOut > 900) {
-        pullOut = 0;
-        exitToSolar();
-      }
-    }
-  },
-  { passive: true }
-);
-
-// Generous invisible pick spheres so small planets are easy to hit from far away
-const proxyMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
-const proxyGeo = new THREE.SphereGeometry(1, 12, 8);
-const proxies = [...solar.pickables, earth.globe].map((obj) => {
-  const r = obj.geometry.parameters.radius;
-  const p = new THREE.Mesh(proxyGeo, proxyMat);
-  p.scale.setScalar(obj === earth.globe ? 10 : Math.max(r * 2.2, 5));
-  p.userData.target = obj === earth.globe ? 'Earth' : obj;
-  (obj === earth.globe ? earth.group : obj).add(p);
-  if (obj !== earth.globe) p.scale.divideScalar(obj.scale.x || 1);
-  return p;
-});
-const earthSphere = new THREE.Sphere(new THREE.Vector3(), 1);
-const hitList = [];
 function pick(force = false) {
   pointerDirty = false;
   hoverIdx = -1;
-  hoverPlanet = null;
-  if (!pointerInside && !down && !force) return setHover();
-  raycaster.setFromCamera(ndc, camera);
-  if (mode === 'earth') {
-    hitList.length = 0;
-    earthSphere.center.copy(earthCenter);
+  if (pointerInside || force) {
+    raycaster.setFromCamera(ndc, camera);
     const g = raycaster.ray.intersectSphere(earthSphere, tmpV);
     const gDist = g ? g.distanceTo(raycaster.ray.origin) : Infinity;
+    hitList.length = 0;
     raycaster.intersectObject(markers.hits, false, hitList);
-    const h = hitList.find((x) => x.distance < gDist + 0.03);
+    const h = hitList.find((x) => x.distance < gDist + 0.04);
     if (h) hoverIdx = h.instanceId;
-  } else if (mode === 'solar' || mode === 'intro') {
-    const hits = raycaster.intersectObjects(proxies, false);
-    // prefer Earth when overlapping (it's the storefront)
-    const hit = hits.find((x) => x.object.userData.target === 'Earth') || hits[0];
-    if (hit) hoverPlanet = hit.object.userData.target;
   }
-  setHover();
-}
-function setHover() {
   markers.setHovered(hoverIdx);
-  let label = '';
-  if (hoverIdx >= 0) {
-    const l = LOCATIONS[hoverIdx];
-    label = `<b>${l.city}</b><span>${l.region === l.city ? l.country : `${l.region}, ${l.country}`}</span><em>${COUNT_BY_LOC[l.id]} in stock</em>`;
-  } else if (hoverPlanet) {
-    label = hoverPlanet === 'Earth' ? '<b>Earth</b><em>Click to land & shop</em>' : `<b>${hoverPlanet.name}</b><em>Coming soon</em>`;
-  }
-  tip.innerHTML = label;
-  tip.classList.toggle('show', !!label && !isTouch);
-  canvas.style.cursor = label ? 'pointer' : 'grab';
+  const c = COUNTRIES[hoverIdx];
+  tip.innerHTML = c ? `<b>${c.id}</b><span>${c.continent}</span><em>${COUNT_BY_COUNTRY[c.id]} in stock</em>` : '';
+  tip.classList.toggle('show', !!c && !isTouch);
+  canvas.style.cursor = c ? 'pointer' : 'grab';
 }
 
-// ---------- City labels (pooled DOM, only front-facing & close) ----------
+// ---------- Country labels (pooled DOM, front-facing only) ----------
 const labelLayer = $('#labels');
-const labels = LOCATIONS.map((l) => {
+const labels = COUNTRIES.map((c) => {
   const el = document.createElement('button');
   el.className = 'label';
-  el.textContent = l.city;
+  el.textContent = c.id;
   el.tabIndex = -1;
-  el.onclick = () => flyToLocation(l);
+  el.onclick = () => flyToCountry(c);
   labelLayer.appendChild(el);
   return { el, shown: false };
 });
-const tmpV = new THREE.Vector3();
-const tmpN = new THREE.Vector3();
 const camDir = new THREE.Vector3();
-const earthTag = $('#earth-tag');
-earthTag.onclick = () => {
-  $('#hero').classList.add('gone');
-  enterEarth();
-};
 function updateLabels() {
-  const solarView = mode === 'solar' || mode === 'intro';
-  earthTag.style.display = solarView ? 'block' : 'none';
-  if (solarView) {
-    tmpV.copy(earthCenter).project(camera);
-    const behind = tmpV.z > 1;
-    earthTag.style.visibility = behind ? 'hidden' : 'visible';
-    earthTag.style.transform = `translate(${(tmpV.x * 0.5 + 0.5) * innerWidth}px, ${(-tmpV.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -150%)`;
-  }
-  const show = mode === 'earth';
-  const dist = camera.position.distanceTo(earthCenter);
-  camDir.copy(camera.position).sub(earthCenter).normalize();
-  const w = innerWidth;
-  const h = innerHeight;
+  const dist = camera.position.length();
+  camDir.copy(camera.position).normalize();
   for (let i = 0; i < labels.length; i++) {
     const L = labels[i];
-    let visible = false;
-    if (show) {
-      locWorldDir(i, tmpN);
-      const facing = tmpN.dot(camDir);
-      visible = facing > 0.45 && (dist < 2.6 || i === activeIdx || i === hoverIdx);
-      if (visible) {
-        tmpV.copy(earthCenter).addScaledVector(tmpN, 1 + markers.heights[i] + 0.01).project(camera);
-        const x = (tmpV.x * 0.5 + 0.5) * w;
-        const y = (-tmpV.y * 0.5 + 0.5) * h;
-        L.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -130%)`;
-        L.el.style.opacity = Math.min(1, (facing - 0.45) * 4).toFixed(2);
-        L.el.classList.toggle('active', i === activeIdx);
-      }
+    const n = markers.normals[i];
+    const facing = n.dot(camDir);
+    const visible = facing > 0.45 && (dist < 2.8 || i === activeIdx || i === hoverIdx);
+    if (visible) {
+      tmpV.copy(n).multiplyScalar(1 + markers.heights[i] + 0.01).project(camera);
+      L.el.style.transform = `translate(${(tmpV.x * 0.5 + 0.5) * innerWidth}px, ${(-tmpV.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -130%)`;
+      L.el.style.opacity = Math.min(1, (facing - 0.45) * 4).toFixed(2);
+      L.el.classList.toggle('active', i === activeIdx);
     }
     if (visible !== L.shown) {
       L.el.style.display = visible ? 'block' : 'none';
@@ -486,15 +252,12 @@ function updateLabels() {
   }
 }
 
-// ---------- Resize ----------
-function resize() {
+// ---------- Resize / context loss ----------
+addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-}
-addEventListener('resize', resize);
-
-// ---------- Context loss safety ----------
+});
 canvas.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   $('#lost').hidden = false;
@@ -507,13 +270,12 @@ let frameN = 0;
 let goodSince = performance.now();
 function adapt(dt) {
   frameAcc += Math.min(dt, 0.25);
-  frameN++;
-  if (frameN < 60) return;
+  if (++frameN < 60) return;
   const avg = frameAcc / frameN;
   frameAcc = frameN = 0;
   const now = performance.now();
   if (avg > 1 / 42 && pixelRatio > 0.75) {
-    prCeiling = pixelRatio - 0.25; // don't climb back to a level that struggled
+    prCeiling = pixelRatio - 0.25; // never climb back to a level that struggled
     pixelRatio = Math.max(0.75, pixelRatio - 0.25);
     renderer.setPixelRatio(pixelRatio);
     goodSince = now;
@@ -527,6 +289,7 @@ function adapt(dt) {
 }
 
 // ---------- Main loop ----------
+const lightOffset = new THREE.Vector3();
 let elapsed = 0;
 let lastT = performance.now();
 function frame(now = performance.now()) {
@@ -535,27 +298,17 @@ function frame(now = performance.now()) {
   const dt = Math.min(raw, 0.05); // clamp so tab switches never cause jumps
   elapsed += dt;
 
-  stepTweens(Math.min(raw, 0.25)); // camera moves keep wall-clock timing even on slow devices
-  solar.update(dt, elapsed, orbitsOn);
-  if (orbitsOn) {
-    earthPivot.rotation.y += dt * 0.05 * 0.32;
-    earth.spin.rotation.y += dt * 0.25;
-  }
+  stepTweens(Math.min(raw, 0.25));
   earth.clouds.rotation.y += dt * 0.006;
 
-  earthWorldCenter();
-  sunDirTmp.copy(solar.sun.position).sub(earthCenter).normalize();
-  earth.uniforms.sunDir.value.copy(sunDirTmp);
-
-  if (mode === 'earth') {
-    const d = camera.position.distanceTo(earthCenter);
-    controls.rotateSpeed = THREE.MathUtils.clamp((d - 1) * 0.35, 0.08, 0.9);
-    controls.zoomSpeed = 0.9;
-    const idle = performance.now() - lastInteraction > 6000;
-    controls.autoRotate = idle && !market.isOpen() && !camTween;
-    controls.autoRotateSpeed = 0.35;
-  }
+  const d = camera.position.length();
+  controls.rotateSpeed = THREE.MathUtils.clamp((d - 1) * 0.35, 0.08, 0.9);
+  controls.autoRotate = performance.now() - lastInteraction > 6000 && !market.isOpen() && !camTween;
   if (controls.enabled) controls.update(dt);
+
+  // Key light sits up-left of the camera so the visible side is always lit
+  lightOffset.set(-0.35, 0.45, 0).applyQuaternion(camera.quaternion);
+  earth.lightDir.value.copy(camera.position).normalize().add(lightOffset);
 
   if (pointerDirty) pick();
   applyViewOffset(dt);
@@ -567,35 +320,11 @@ function frame(now = performance.now()) {
 }
 
 // ---------- Boot ----------
-setHud('intro');
 manager.onLoad = () => {
   $('#loader').classList.add('done');
   lastT = performance.now();
   renderer.setAnimationLoop(frame);
-  const p0 = camera.position.clone();
-  tween(
-    3.5,
-    (e) => {
-      camera.position.lerpVectors(p0, SOLAR_VIEW, e);
-      camera.lookAt(0, 0, 0);
-    },
-    { exclusive: true }
-  ).then((done) => {
-    if (!done || mode !== 'intro') return;
-    controls.minDistance = 25;
-    controls.maxDistance = 900;
-    controls.enabled = true;
-    mode = 'solar';
-    setHud('solar');
-  });
-  // Auto-land if the visitor just watches
-  setTimeout(() => {
-    if (mode === 'solar' && performance.now() - lastInteraction > 6000) {
-      $('#hero').classList.add('gone');
-      enterEarth();
-    }
-  }, 9000);
+  flyTo(START.clone().normalize(), FULL_DIST);
 };
 manager.onError = (url) => console.warn('Texture failed:', url);
-// pre-compile shaders while textures stream in to avoid first-frame hitches
 renderer.compile(scene, camera);

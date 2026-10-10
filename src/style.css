@@ -39,27 +39,25 @@ button { cursor: pointer; }
 #bag-btn.bump { animation: bump 0.4s; }
 #bag-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: #fff; color: #000; font-size: 11px; margin-left: 4px; }
 @keyframes bump { 50% { transform: scale(1.15); } }
-body[data-mode='solar'] #btn-zoomout, body[data-mode='intro'] #btn-zoomout, body[data-mode='solar'] #btn-light, body[data-mode='intro'] #btn-light { display: none; }
-body[data-mode='transit'] .actions button:not(#bag-btn) { opacity: 0.5; pointer-events: none; }
 
+#continents { position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%); z-index: 6; display: flex; gap: 8px; max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none; padding: 4px; }
+#continents::-webkit-scrollbar { display: none; }
+#continents button, #country-chips button { flex: none; border: 1px solid var(--line); background: rgba(10, 12, 22, 0.7); backdrop-filter: blur(10px); padding: 9px 15px; border-radius: 999px; font-weight: 600; white-space: nowrap; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+#continents button:hover, #country-chips button:hover { border-color: rgba(255, 255, 255, 0.35); }
+#continents button.on { background: var(--cyan); border-color: var(--cyan); color: #000; }
+#continents small, #country-chips small { opacity: 0.6; font-weight: 500; margin-left: 2px; }
+body:has(#market.open) #continents { left: calc((100vw - min(560px, 46vw) - 12px) / 2); max-width: calc(100vw - min(560px, 46vw) - 44px); }
+#country-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px 0; }
+#country-chips:empty { display: none; }
+#country-chips button { padding: 6px 12px; font-size: 13px; }
+.where { margin: 0; font-size: 12px; font-weight: 600; color: var(--cyan); }
 #hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); margin: 0; padding: 7px 14px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); color: var(--muted); font-size: 12px; z-index: 5; pointer-events: none; white-space: nowrap; transition: opacity 0.4s; }
 #hint:empty, body:has(#market.open) #hint { opacity: 0; }
-
-/* Hero */
-#hero { position: fixed; left: 6vw; bottom: 12vh; z-index: 10; max-width: 460px; transition: opacity 0.8s, transform 0.8s; }
-#hero.gone, body:not([data-mode='intro']):not([data-mode='solar']) #hero { opacity: 0; transform: translateY(20px); pointer-events: none; }
-#hero h1 { font-family: Anton, Impact, sans-serif; font-size: clamp(56px, 9vw, 120px); line-height: 0.88; margin: 0 0 16px; letter-spacing: 0.01em; text-shadow: 0 0 40px rgba(255, 61, 46, 0.35); }
-#hero p { color: #c9cde0; font-size: 16px; margin: 0 0 22px; }
-.cta { display: flex; gap: 10px; flex-wrap: wrap; }
-.cta button { padding: 13px 22px; border-radius: 999px; border: 1px solid var(--hot); background: var(--hot); font-weight: 600; letter-spacing: 0.02em; }
-.cta .ghost { background: transparent; border-color: var(--line); }
 
 /* Labels */
 #labels { position: fixed; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
 .label { position: absolute; left: 0; top: 0; display: none; pointer-events: auto; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(5, 8, 18, 0.7); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; will-change: transform; }
 .label.active { border-color: var(--cyan); color: var(--cyan); }
-#earth-tag { position: fixed; left: 0; top: 0; z-index: 4; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--cyan); background: rgba(5, 8, 18, 0.75); color: var(--cyan); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; display: none; will-change: transform; animation: glow 2s infinite; }
-@keyframes glow { 50% { box-shadow: 0 0 18px rgba(92, 242, 255, 0.55); } }
 
 #tip { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; padding: 8px 11px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(10px); opacity: 0; transition: opacity 0.15s; display: flex; flex-direction: column; gap: 1px; min-width: 120px; }
 #tip.show { opacity: 1; }
@@ -82,7 +80,7 @@ body[data-mode='transit'] .actions button:not(#bag-btn) { opacity: 0.5; pointer-
 .mtitle p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
 #sort { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
 #sort option { background: #111; }
-#grid { flex: 1; overflow: auto; padding: 16px 18px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; align-content: start; overscroll-behavior: contain; }
+#grid { flex: 1; min-height: 0; overflow: auto; grid-auto-rows: max-content; padding: 16px 18px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; align-content: start; overscroll-behavior: contain; }
 .card { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: rgba(255, 255, 255, 0.03); display: flex; flex-direction: column; animation: rise 0.45s both; transition: transform 0.2s, border-color 0.2s; }
 .card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.25); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
@@ -97,8 +95,6 @@ body[data-mode='transit'] .actions button:not(#bag-btn) { opacity: 0.5; pointer-
 .facts { margin: 0; font-size: 12px; color: #c4c8d8; }
 .blurb { margin: 0; font-size: 12px; color: var(--muted); flex: 1; }
 .foot { margin-top: 4px; }
-.loc { border: 0; background: none; padding: 0; color: var(--cyan); font-size: 11px; text-align: left; }
-.loc:hover { text-decoration: underline; }
 .size { font-size: 11px; color: var(--muted); }
 .add { margin-top: 8px; border: 1px solid var(--hot); background: var(--hot); border-radius: 10px; padding: 9px; font-weight: 600; }
 .add.in { background: transparent; color: var(--hot); }
@@ -139,9 +135,10 @@ body[data-mode='transit'] .actions button:not(#bag-btn) { opacity: 0.5; pointer-
   #bag { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 70vh; border-width: 1px 0 0; border-radius: 18px 18px 0 0; transform: translateY(105%); }
   #grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; padding: 12px 12px 30px; }
   .mtitle h2 { font-size: 26px; }
-  #hero { left: 16px; right: 16px; bottom: 9vh; }
+  body:has(#market.open) #continents { left: 50%; max-width: calc(100vw - 32px); bottom: calc(58vh + 10px); }
+  #continents button { padding: 7px 12px; font-size: 12px; }
   #hint { bottom: 10px; font-size: 11px; white-space: normal; text-align: center; width: max-content; max-width: 92vw; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .card, #earth-tag { animation: none; }
+  .card { animation: none; }
 }
