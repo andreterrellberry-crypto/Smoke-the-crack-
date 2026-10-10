@@ -3,27 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#140f2a" />
+    <meta name="theme-color" content="#8fd0e6" />
     <meta name="description" content="Smoke the Crack — vintage grails sold on one block. Walk the hood, step into a store from every continent, hit the booster’s van in the alley." />
     <title>Smoke the Crack</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%23140f2a'/><rect x='2' y='5' width='12' height='11' fill='%237a3326'/><rect x='1' y='4' width='14' height='2' fill='%23f2c230'/><rect x='6' y='10' width='4' height='6' fill='%231c3a2a'/><rect x='3' y='8' width='2' height='2' fill='%23ffd57a'/><rect x='11' y='8' width='2' height='2' fill='%23ff3fa4'/></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M3 5 L29 4 L28 28 L4 29 Z' fill='%23f6cc3c' stroke='%231b1410' stroke-width='2.5' stroke-linejoin='round'/><path d='M8 25 L9 12 L16 8 L23 12 L24 25' fill='%23e0443a' stroke='%231b1410' stroke-width='2' stroke-linejoin='round'/><path d='M13 25 L13 18 L19 18 L19 25' fill='%23fffdf4' stroke='%231b1410' stroke-width='1.8'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bungee&family=Lilita+One&family=Luckiest+Guy&family=Pacifico&family=Patrick+Hand&family=Permanent+Marker&family=Shojumaru&family=Titan+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&text=%E5%8F%A4%E7%9D%80%E7%A5%AD%E3%83%8B%E3%82%BB%E3%83%A2%E3%83%8E%E7%A6%81%E6%AD%A2&display=swap" rel="stylesheet" />
   </head>
   <body data-mode="aerial">
-    <div id="street-wrap"><canvas id="street" class="pix" aria-label="The block at night. Tap a storefront to go inside."></canvas></div>
+    <div id="street-wrap"><canvas id="street" aria-label="The block, drawn like a comic. Tap a storefront to go inside."></canvas></div>
 
     <section id="interior" aria-label="Inside the store">
-      <canvas id="room" class="pix"></canvas>
+      <canvas id="room"></canvas>
       <div id="bubble" aria-live="polite"></div>
       <button id="back" type="button">◂ Back to the block</button>
       <button id="browse" type="button">Browse the racks</button>
     </section>
 
     <section id="aerial" aria-label="The block from above">
-      <canvas id="aerial-cv" class="pix"></canvas>
+      <canvas id="aerial-cv"></canvas>
       <div class="aerial-title">
+        <span class="issue">No. 1 · CHEAP!</span>
         <h1>SMOKE THE CRACK</h1>
         <p>Vintage grails, sold on the block. A store from every continent.</p>
         <button id="drop" type="button">Drop in ▾</button>

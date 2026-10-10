@@ -1,6 +1,6 @@
 # Smoke the Crack — Global Resell Block
 
-Vintage grails sold on one block in the hood, drawn in pixel art. The site opens looking straight down at the block at night, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
+Vintage grails sold on one block in the hood, hand-inked like a MAD Magazine strip: wobbly brush outlines, Ben-Day halftone dots, gangly characters with droopy noses and flapping shoes, comic lettering and SFX. The site opens looking straight down at the block, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
 
 ## Run
 
@@ -10,7 +10,7 @@ npm run dev      # local dev server
 npm run build    # static build → dist/ (deploy anywhere: Vercel, Netlify, S3)
 ```
 
-No images to download and no 3D engine: every building, person, car and garment is drawn pixel by pixel in code onto a low-res canvas that's scaled up with crisp pixels.
+No images to download and no 3D engine: every building, person, car and garment is inked in code with jittered pen and brush strokes, then rendered at your screen's real resolution.
 
 ## The block
 
@@ -35,14 +35,13 @@ No images to download and no 3D engine: every building, person, car and garment 
 | What | File |
 | --- | --- |
 | Stores, owners, inventory, booster stock | `src/data/inventory.js` |
-| Pixel toolkit (bricks, windows, shutters, graffiti, wires, glow) | `src/pix/draw.js` |
-| Bitmap sign fonts (5x7, 3x5) | `src/pix/font.js` |
-| Character sprites, owners, the booster, cars, pigeons, cat | `src/pix/sprites.js` |
-| Neighbourhood storefronts, alley, construction, street furniture | `src/pix/facades.js` |
-| Street engine: camera, parallax, people, traffic, neon | `src/pix/street.js` |
-| Aerial intro | `src/pix/aerial.js` |
-| Store interiors | `src/pix/interior.js` |
-| Pixel garments | `src/pix/items.js` |
+| Ink toolkit (pen, brush, halftone, hatching, lettering, SFX) | `src/ink/ink.js` |
+| Characters: walkers, owners, the booster, cars, pigeons, cat | `src/ink/chars.js` |
+| Neighbourhood storefronts, the van, construction, street furniture | `src/ink/facades.js` |
+| Street engine: camera, parallax, people, traffic, neon, comic SFX | `src/ink/street.js` |
+| Aerial intro | `src/ink/aerial.js` |
+| Store interiors + the trunk close-up | `src/ink/interior.js` |
+| Inked garments | `src/ink/items.js` |
 | Marketplace panel, bag, search | `src/ui/market.js` |
 | Flow (intro → street → door → interior) | `src/main.js` |
 
@@ -50,9 +49,12 @@ No images to download and no 3D engine: every building, person, car and garment 
 Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed in one store's `countries`. Window displays, racks, counts, pedestrians' outfits and the directory all update on their own. Booster Corner stock lives in `BOOSTER_RAW` (the last column is the rarity badge).
 
 ## Controls
-- Drag, scroll, or ← → to walk the block. The directory bar at the bottom jumps to any store.
+- Drag, scroll, or ← → to walk the block. The directory bar under the header jumps to any store.
 - Tap a storefront to walk to it and go inside. `Esc` closes panels and leaves a store.
 - Search finds stores, regions, countries, brands and cities, then walks you to the right door.
 
+## Moving parts
+Walk cycles with hinged flappy shoes, line boil on anyone standing still (two inkings swapped six times a second), cars bouncing with speed lines and exhaust puffs, pigeons that scatter (FLAP FLAP), buzzing neon (BZZT!), manhole steam (FSSSH), honks, a door SHKLAK! on the way in, a SHTOINK! when the trunk zooms, loiterers talking local slang, sneakers swinging on the power line, drifting clouds and a turning sun.
+
 ## Performance
-The block, skylines and street furniture are painted once into off-screen canvases. Each frame only copies slices of those and draws ~15 small sprites (people, cars, neon, steam) onto a canvas around 480×300 pixels, which the browser scales up. The street stops rendering while you're inside a store.
+The block and skylines are inked once into off-screen tiles (≤4000px each) at your screen's resolution. Each frame copies the visible tiles and draws a few dozen pre-rendered sprites (people, cars, props, neon, SFX). The street stops rendering while you're inside a store.

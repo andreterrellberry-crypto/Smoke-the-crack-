@@ -1,11 +1,11 @@
 import './style.css';
 import { STORES, ITEMS, BOOSTER_ITEMS, STORE_BY_ID, LOC_BY_ID, COUNT_BY_STORE, itemsForScope, storeOfItem, isOpen } from './data/inventory.js';
-import { createStreet } from './pix/street.js';
-import { buildAerial, topCar, topPerson, AH } from './pix/aerial.js';
-import { buildRoom, buildOwner, drawCounter, buildTrunkScene, buildTrunkActor, drawBoosterBust, RW, RH, TW, TH, OWNER_X, OWNER_FEET, FW, FH } from './pix/interior.js';
-import { canvas } from './pix/draw.js';
+import { ensureFonts } from './ink/ink.js';
+import { createStreet } from './ink/street.js';
+import { buildAerial, topCar, topPerson, AH } from './ink/aerial.js';
+import { buildRoom, buildCounter, buildOwner, drawOwner, buildTrunkScene, buildTrunkActor, drawBoosterBust, portrait, roomR, RW, RH, TW, TH, OWNER_X } from './ink/interior.js';
 import { createMarket } from './ui/market.js';
-import { itemImg } from './pix/items.js';
+import { itemImg } from './ink/items.js';
 
 const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -16,6 +16,10 @@ const panelPx = () => (isWide() ? Math.min(560, innerWidth * 0.46) + 12 : 0);
 
 const itemsByStore = Object.fromEntries(STORES.map((s) => [s.id, itemsForScope({ level: 'store', value: s.id })]));
 const openById = Object.fromEntries(STORES.map((s) => [s.id, isOpen(s)]));
+
+// canvas lettering needs the comic fonts in before anything is inked
+await ensureFonts(["'Bangers'", "'Luckiest Guy'", "'Permanent Marker'", "'Patrick Hand'", "'Bungee'", "'Pacifico'", "'Anton'", "'Titan One'", "'Shojumaru'", "'Lilita One'", ["'Noto Sans JP'", '古着祭ニセモノ禁止']]);
+document.body.classList.add('inked');
 
 let mode = 'aerial'; // aerial | street | interior
 let currentStore = null;
@@ -151,7 +155,8 @@ async function goBooster() {
   const arrived = await street.walkToBooster();
   if (!arrived || token !== navToken) return;
   tip.hidden = true;
-  await wait(250);
+  street.popTrunk();
+  await wait(380);
   const t = street.trunkScreen();
   streetWrap.style.transformOrigin = `${t.x}px ${t.y}px`;
   streetWrap.classList.add('ready', 'zoom');
@@ -169,33 +174,36 @@ async function goBooster() {
 // ---------- Interior scenes (store rooms + the booster's trunk) ----------
 const roomCv = $('#room');
 const rctx = roomCv.getContext('2d');
+const RR = roomR();
+const sceneCache = {};
 let room = null;
 function storeScene(st) {
-  const { room: bg, counterColor } = buildRoom(st, itemsByStore[st.id]);
-  const owner = buildOwner(st.id);
+  const c = (sceneCache[st.id] ??= (() => {
+    const { room: bg, counterColor } = buildRoom(st, itemsByStore[st.id], RR);
+    return { bg, counter: buildCounter(st, counterColor, RR), actor: buildOwner(st.id, RR) };
+  })());
   return {
-    bg, actor: owner, w: RW, h: RH, focusX: OWNER_X, focusY: 76, bustH: 56, bustFX: 0.24,
+    bg: c.bg, actor: c.actor, w: RW, h: RH, focusX: OWNER_X, focusY: 86, bustH: 70, bustFX: 0.24,
     who: st.owner, where: `${st.name} · ${st.from}`, line: st.greeting,
     draw(fr) {
-      rctx.drawImage(fr, OWNER_X - FW / 2, OWNER_FEET - FH + 1);
-      drawCounter(rctx, counterColor, st.name);
+      drawOwner(rctx, fr);
+      rctx.drawImage(c.counter, 0, 0, RW, RH);
     },
   };
 }
 function trunkScene() {
+  const c = (sceneCache.booster ??= { bg: buildTrunkScene(BOOSTER_ITEMS, RR), actor: buildTrunkActor(RR) });
   return {
-    bg: buildTrunkScene(BOOSTER_ITEMS), actor: buildTrunkActor(), w: TW, h: TH, focusX: 96, focusY: 100, bustH: 90, bustFX: 0.5, phoneFocusX: 70, phoneFocusY: 105,
+    bg: c.bg, actor: c.actor, w: TW, h: TH, focusX: 96, focusY: 100, bustH: 96, bustFX: 0.5, phoneFocusX: 72, phoneFocusY: 110,
     who: 'The Booster', where: 'Booster Corner · back of the van', line: 'Ain’t nobody got these.',
     draw(fr) { drawBoosterBust(rctx, fr); },
   };
 }
 function openScene(scene) {
   room = { ...scene, t: 0 };
-  roomCv.width = scene.w;
-  roomCv.height = scene.h;
-  const [pc, pctx] = canvas(20, 22);
-  pctx.drawImage(scene.actor.idle, 6, 0, 20, 22, 0, 0, 20, 22);
-  pc.className = 'pix';
+  roomCv.width = Math.round(scene.w * RR);
+  roomCv.height = Math.round(scene.h * RR);
+  const pc = portrait(scene.actor[0].idle);
   $('#bubble').innerHTML = `<div class="portrait"></div><div><b>${esc(scene.who)}</b><span>${esc(scene.where)}</span><p>“${esc(scene.line)}”</p></div>`;
   $('#bubble .portrait').appendChild(pc);
   renderRoom(0);
@@ -205,9 +213,9 @@ function renderRoom(dt) {
   if (!room) return;
   room.t += dt;
   const t = room.t;
-  rctx.imageSmoothingEnabled = false;
-  rctx.drawImage(room.bg, 0, 0);
-  const o = room.actor;
+  rctx.setTransform(RR, 0, 0, RR, 0, 0);
+  rctx.drawImage(room.bg, 0, 0, room.w, room.h);
+  const o = room.actor[Math.floor(t * 6) % 2]; // two inkings swapped = line boil
   const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.18 ? o.blink : o.idle;
   room.draw(fr);
 }
@@ -266,41 +274,48 @@ function hidePed() {
 const aerial = $('#aerial');
 const acv = $('#aerial-cv');
 const actx = acv.getContext('2d');
-const aer = buildAerial(street.segs, street.width, STORE_BY_ID, openById);
+const aerScale = () => Math.min(innerHeight / 260, innerWidth / 150);
+const AR = Math.max(2, Math.min(3, Math.ceil(aerScale() * (devicePixelRatio || 1))));
+const aer = buildAerial(street.segs, street.width, STORE_BY_ID, openById, AR);
+const aerW = aer.c.uw;
 const firstStore = street.segs.find((s) => s.kind === 'store');
 let as = 2, avw = 0, avh = 0;
 function frameAerial() {
-  as = Math.max(1, Math.floor(Math.min(innerHeight / 260, innerWidth / 150)));
-  avw = Math.ceil(innerWidth / as);
-  avh = Math.ceil(innerHeight / as);
-  acv.width = avw;
-  acv.height = avh;
-  acv.style.width = `${avw * as}px`;
-  acv.style.height = `${avh * as}px`;
-  actx.imageSmoothingEnabled = false;
+  const dpr = devicePixelRatio || 1;
+  as = aerScale();
+  avw = innerWidth / as;
+  avh = innerHeight / as;
+  acv.width = Math.round(innerWidth * dpr);
+  acv.height = Math.round(innerHeight * dpr);
+  acv.style.width = `${innerWidth}px`;
+  acv.style.height = `${innerHeight}px`;
+  actx.setTransform(as * dpr, 0, 0, as * dpr, 0, 0);
 }
 frameAerial();
 addEventListener('resize', frameAerial);
-const sweepFrom = Math.max(0, aer.c.width - avw);
+const sweepFrom = Math.max(0, aerW - avw);
 const sweepTo = aer.ox + firstStore.x + firstStore.w / 2 - avw / 2;
 let ax = sweepFrom;
 const ay = () => Math.max(0, Math.min(AH - avh, aer.streetY - avh * 0.55));
 const movers = [
-  ...['#b02a2a', '#d9b23a', '#2a4a8a', '#d8d4de', '#2e7a4a'].map((c, i) => ({ sp: topCar(c), x: (i * 431) % aer.c.width, y: aer.streetY + (i % 2 ? 20 : 34), v: (i % 2 ? -1 : 1) * (40 + i * 7) })),
-  ...Array.from({ length: 16 }, (_, i) => ({ sp: topPerson(['#c8102e', '#f4f4f4', '#2a5ea8', '#f4c430', '#1a1a1a'][i % 5]), x: (i * 197) % aer.c.width, y: aer.streetY + (i % 2 ? -6 : 72) + (i % 3) * 3, v: (i % 2 ? 1 : -1) * (8 + (i % 4) * 3) })),
+  ...['#e0443a', '#f6cc3c', '#2a5ea8', '#e6e2ea', '#2e8a52'].map((c, i) => ({ sp: topCar(c, AR), x: (i * 431) % aerW, y: aer.streetY + (i % 2 ? 18 : 34), v: (i % 2 ? -1 : 1) * (40 + i * 7) })),
+  ...Array.from({ length: 16 }, (_, i) => ({ sp: topPerson(['#e0443a', '#f6f4ee', '#2a5ea8', '#f6cc3c', '#1d1a22'][i % 5], AR), x: (i * 197) % aerW, y: aer.streetY + (i % 2 ? -7 : 71) + (i % 3) * 3, v: (i % 2 ? 1 : -1) * (8 + (i % 4) * 3) })),
 ];
 let introT = 0, introDone = false, dropping = false, introScheduled = false;
 function renderAerial(dt) {
   for (const m of movers) {
     m.x += m.v * dt;
-    if (m.x > aer.c.width) m.x = -20;
-    if (m.x < -20) m.x = aer.c.width;
+    if (m.x > aerW) m.x = -20;
+    if (m.x < -20) m.x = aerW;
   }
-  const x = Math.round(ax), y = Math.round(ay());
-  actx.fillStyle = '#2a2630';
+  const x = ax, y = ay();
+  actx.fillStyle = '#6d6a72';
   actx.fillRect(0, 0, avw, avh);
-  actx.drawImage(aer.c, x, y, avw, avh, 0, 0, avw, avh);
-  for (const m of movers) actx.drawImage(m.sp, Math.round(m.x - x), Math.round(m.y - y));
+  actx.drawImage(aer.c, -x, -y, aer.c.uw, aer.c.uh);
+  for (const m of movers) {
+    if (m.v < 0) { actx.save(); actx.translate(m.x - x + m.sp.uw, m.y - y); actx.scale(-1, 1); actx.drawImage(m.sp, 0, 0, m.sp.uw, m.sp.uh); actx.restore(); }
+    else actx.drawImage(m.sp, m.x - x, m.y - y, m.sp.uw, m.sp.uh);
+  }
 }
 function finishIntro(skip) {
   if (introDone || dropping) return;
@@ -308,8 +323,8 @@ function finishIntro(skip) {
   if (skip) ax = sweepTo;
   renderAerial(0);
   street.jumpToStore(firstStore.id);
-  const sx = (aer.ox + firstStore.x + firstStore.w / 2 - Math.round(ax)) * as;
-  const sy = (aer.streetY - Math.round(ay())) * as;
+  const sx = (aer.ox + firstStore.x + firstStore.w / 2 - ax) * as;
+  const sy = (aer.streetY - ay()) * as;
   aerial.style.transformOrigin = `${sx}px ${sy}px`;
   aerial.classList.add('drop');
   streetWrap.classList.add('arrive');
