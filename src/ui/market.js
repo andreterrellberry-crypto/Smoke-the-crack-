@@ -2,7 +2,7 @@ import {
   ITEMS, ALL_ITEMS, BOOSTER_ITEMS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
   itemsForScope, COUNT_BY_COUNTRY, COUNT_BY_STORE, storeOfItem, isOpen,
 } from '../data/inventory.js';
-import { itemImg } from '../ink/items.js';
+import { itemImg } from '../toon/items.js';
 
 const $ = (s) => document.querySelector(s);
 const money = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);

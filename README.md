@@ -1,6 +1,6 @@
 # Smoke the Crack — Global Resell Block
 
-Vintage grails sold on one block in the hood, hand-inked like a MAD Magazine strip: wobbly brush outlines, Ben-Day halftone dots, gangly characters with droopy noses and flapping shoes, comic lettering and SFX. The site opens looking straight down at the block, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
+Vintage grails sold on one block in the hood, drawn like a Saturday-morning cartoon show: flat saturated colour, clean even black outlines, googly-eyed big-nosed characters with buck teeth and giant shoes, and streets that recede in one-point perspective. The site opens looking straight down at the block, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
 
 ## Run
 
@@ -10,7 +10,7 @@ npm run dev      # local dev server
 npm run build    # static build → dist/ (deploy anywhere: Vercel, Netlify, S3)
 ```
 
-No images to download and no 3D engine: every building, person, car and garment is inked in code with jittered pen and brush strokes, then rendered at your screen's real resolution.
+No images to download and no 3D engine: every building, person, car and garment is drawn in code with vector shapes, then rendered at your screen's real resolution. Building side walls and the two cross streets are re-projected every frame toward a vanishing point at the centre of the screen, so the block swings in 3D as you walk.
 
 ## The block
 
@@ -35,13 +35,13 @@ No images to download and no 3D engine: every building, person, car and garment 
 | What | File |
 | --- | --- |
 | Stores, owners, inventory, booster stock | `src/data/inventory.js` |
-| Ink toolkit (pen, brush, halftone, hatching, lettering, SFX) | `src/ink/ink.js` |
-| Characters: walkers, owners, the booster, cars, pigeons, cat | `src/ink/chars.js` |
-| Neighbourhood storefronts, the van, construction, street furniture | `src/ink/facades.js` |
-| Street engine: camera, parallax, people, traffic, neon, comic SFX | `src/ink/street.js` |
-| Aerial intro | `src/ink/aerial.js` |
-| Store interiors + the trunk close-up | `src/ink/interior.js` |
-| Inked garments | `src/ink/items.js` |
+| Cartoon toolkit (shapes, tubes, splines, lettering, palette) | `src/toon/toon.js` |
+| Characters: walkers, owners, the booster, neighbours, cars, pigeons, cat, dog | `src/toon/chars.js` |
+| Neighbourhood storefronts, the van, construction, street furniture | `src/toon/facades.js` |
+| Street engine: camera, perspective pass, cross streets, people, traffic, neon | `src/toon/street.js` |
+| Aerial intro | `src/toon/aerial.js` |
+| Store interiors + the trunk close-up | `src/toon/interior.js` |
+| Flat garments | `src/toon/items.js` |
 | Marketplace panel, bag, search | `src/ui/market.js` |
 | Flow (intro → street → door → interior) | `src/main.js` |
 
@@ -54,7 +54,7 @@ Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed i
 - Search finds stores, regions, countries, brands and cities, then walks you to the right door.
 
 ## Moving parts
-Walk cycles with hinged flappy shoes, line boil on anyone standing still (two inkings swapped six times a second), cars bouncing with speed lines and exhaust puffs, pigeons that scatter (FLAP FLAP), buzzing neon (BZZT!), manhole steam (FSSSH), honks, a door SHKLAK! on the way in, a SHTOINK! when the trunk zooms, loiterers talking local slang, sneakers swinging on the power line, drifting clouds and a turning sun.
+Eight-frame walk cycles with giant shoes, side walls and cross streets swinging in perspective as you walk, traffic lights cycling with a walk / don't-walk hand, nosy neighbours popping up in windows, a sleeping stoop dog snoring Z's, laundry flapping over Rocinha, cars bouncing with exhaust puffs, pigeons that scatter, flickering neon, manhole and alley steam, generator smoke, loiterers talking local slang, sneakers swinging on the power line, birds and drifting clouds. Walking through a door slams a show-style title card for that store.
 
 ## Performance
-The block and skylines are inked once into off-screen tiles (≤4000px each) at your screen's resolution. Each frame copies the visible tiles and draws a few dozen pre-rendered sprites (people, cars, props, neon, SFX). The street stops rendering while you're inside a store.
+The block and skylines are drawn once into off-screen tiles (≤4000px each) at your screen's resolution. Each frame copies the visible tiles, draws a handful of perspective polygons, and a few dozen pre-rendered sprites (people, cars, props, neon). The street stops rendering while you're inside a store.

@@ -1,11 +1,11 @@
 import './style.css';
 import { STORES, ITEMS, BOOSTER_ITEMS, STORE_BY_ID, LOC_BY_ID, COUNT_BY_STORE, itemsForScope, storeOfItem, isOpen } from './data/inventory.js';
-import { ensureFonts } from './ink/ink.js';
-import { createStreet } from './ink/street.js';
-import { buildAerial, topCar, topPerson, AH } from './ink/aerial.js';
-import { buildRoom, buildCounter, buildOwner, drawOwner, buildTrunkScene, buildTrunkActor, drawBoosterBust, portrait, roomR, RW, RH, TW, TH, OWNER_X } from './ink/interior.js';
+import { ensureFonts } from './toon/toon.js';
+import { createStreet } from './toon/street.js';
+import { buildAerial, topCar, topPerson, AH } from './toon/aerial.js';
+import { buildRoom, buildCounter, buildOwner, drawOwner, buildTrunkScene, buildTrunkActor, drawBoosterBust, portrait, roomR, RW, RH, TW, TH, OWNER_X } from './toon/interior.js';
 import { createMarket } from './ui/market.js';
-import { itemImg } from './ink/items.js';
+import { itemImg } from './toon/items.js';
 
 const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -17,9 +17,20 @@ const panelPx = () => (isWide() ? Math.min(560, innerWidth * 0.46) + 12 : 0);
 const itemsByStore = Object.fromEntries(STORES.map((s) => [s.id, itemsForScope({ level: 'store', value: s.id })]));
 const openById = Object.fromEntries(STORES.map((s) => [s.id, isOpen(s)]));
 
-// canvas lettering needs the comic fonts in before anything is inked
-await ensureFonts(["'Bangers'", "'Luckiest Guy'", "'Permanent Marker'", "'Patrick Hand'", "'Bungee'", "'Pacifico'", "'Anton'", "'Titan One'", "'Shojumaru'", "'Lilita One'", ["'Noto Sans JP'", '古着祭ニセモノ禁止']]);
-document.body.classList.add('inked');
+// canvas lettering needs the cartoon fonts in before anything is drawn
+await ensureFonts(["'Alfa Slab One'", "'Bowlby One'", "700 'Fredoka'", "'Pacifico'", "'Bungee'", "'Rubik Bubbles'", ["900 'Noto Sans JP'", '古着祭ニセモノ禁止']]);
+document.body.classList.add('toon');
+
+// show-style title card that slams in while the camera dives through a door
+const card = $('#card');
+function titleCard(title, sub, theme) {
+  card.querySelector('h2').textContent = title;
+  card.querySelector('p').textContent = sub;
+  card.dataset.theme = theme;
+  card.classList.remove('show');
+  void card.offsetWidth;
+  card.classList.add('show');
+}
 
 let mode = 'aerial'; // aerial | street | interior
 let currentStore = null;
@@ -72,7 +83,7 @@ function openMarket(scope) {
 // ---------- Directory ----------
 const dir = $('#directory');
 dir.innerHTML = street.segs
-  .filter((s) => s.kind !== 'corner')
+  .filter((s) => s.kind !== 'cross')
   .map((s) => {
     if (s.kind === 'alley') return `<button data-booster="1" class="booster">Booster Corner <small>RARE</small></button>`;
     const st = STORE_BY_ID[s.id];
@@ -83,7 +94,7 @@ dir.querySelectorAll('button').forEach((b) => (b.onclick = () => (b.dataset.boos
 let hereId;
 function updateDirectory() {
   const cx = street.camX + street.viewW / 2;
-  const seg = street.segs.find((s) => s.kind !== 'corner' && cx >= s.x && cx < s.x + s.w);
+  const seg = street.segs.find((s) => s.kind !== 'cross' && cx >= s.x && cx < s.x + s.w);
   const id = seg ? seg.id : null;
   if (id === hereId) return;
   hereId = id;
@@ -118,6 +129,7 @@ async function enterStore(id, country) {
   const d = street.doorScreen(id);
   streetWrap.style.transformOrigin = `${d.x}px ${d.y}px`;
   streetWrap.classList.add('ready', 'zoom');
+  titleCard(st.name, `${st.owner} · ${st.from}`, id);
   openScene(storeScene(st));
   await wait(650);
   street.setEntering(null);
@@ -155,11 +167,11 @@ async function goBooster() {
   const arrived = await street.walkToBooster();
   if (!arrived || token !== navToken) return;
   tip.hidden = true;
-  street.popTrunk();
-  await wait(380);
+  await wait(250);
   const t = street.trunkScreen();
   streetWrap.style.transformOrigin = `${t.x}px ${t.y}px`;
   streetWrap.classList.add('ready', 'zoom');
+  titleCard('Booster Corner', 'Back of the van · ain’t nobody got these', 'booster');
   openScene(trunkScene());
   await wait(650);
   if (token !== navToken) return;
@@ -203,7 +215,7 @@ function openScene(scene) {
   room = { ...scene, t: 0 };
   roomCv.width = Math.round(scene.w * RR);
   roomCv.height = Math.round(scene.h * RR);
-  const pc = portrait(scene.actor[0].idle);
+  const pc = portrait(scene.actor.idle);
   $('#bubble').innerHTML = `<div class="portrait"></div><div><b>${esc(scene.who)}</b><span>${esc(scene.where)}</span><p>“${esc(scene.line)}”</p></div>`;
   $('#bubble .portrait').appendChild(pc);
   renderRoom(0);
@@ -215,8 +227,8 @@ function renderRoom(dt) {
   const t = room.t;
   rctx.setTransform(RR, 0, 0, RR, 0, 0);
   rctx.drawImage(room.bg, 0, 0, room.w, room.h);
-  const o = room.actor[Math.floor(t * 6) % 2]; // two inkings swapped = line boil
-  const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.18 ? o.blink : o.idle;
+  const o = room.actor;
+  const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.18 ? o.blink : t % 9 > 6.5 && t % 9 < 7.6 ? o.look : o.idle;
   room.draw(fr);
 }
 // Scale the scene to cover the screen and keep its subject centred in whatever space the panel leaves
