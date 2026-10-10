@@ -3,41 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#2b1a14" />
-    <meta name="description" content="Smoke the Crack — a global clothing resell block. Walk the street, step into a store from every continent, shop its archive." />
+    <meta name="theme-color" content="#140f2a" />
+    <meta name="description" content="Smoke the Crack — vintage grails sold on one block. Walk the hood, step into a store from every continent, find Nucci in the alley." />
     <title>Smoke the Crack</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='14' y='30' width='72' height='62' fill='%23a8452f' stroke='%232b1a14' stroke-width='6'/><path d='M8 34h84l-8-16H16z' fill='%23f4c430' stroke='%232b1a14' stroke-width='6'/><rect x='40' y='56' width='20' height='36' fill='%232e6b4a' stroke='%232b1a14' stroke-width='5'/></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%23140f2a'/><rect x='2' y='5' width='12' height='11' fill='%237a3326'/><rect x='1' y='4' width='14' height='2' fill='%23f2c230'/><rect x='6' y='10' width='4' height='6' fill='%231c3a2a'/><rect x='3' y='8' width='2' height='2' fill='%23ffd57a'/><rect x='11' y='8' width='2' height='2' fill='%23ff3fa4'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Inter:wght@400;600;700;800&family=Lilita+One&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,700&family=Rye&family=Shojumaru&family=Titan+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
   </head>
   <body data-mode="aerial">
-    <svg id="defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
-
-    <div id="street-wrap">
-      <svg id="street" preserveAspectRatio="xMidYMax meet" aria-label="The block — tap a storefront to go inside"></svg>
-    </div>
+    <div id="street-wrap"><canvas id="street" class="pix" aria-label="The block at night. Tap a storefront to go inside."></canvas></div>
 
     <section id="interior" aria-label="Inside the store">
-      <svg id="room"></svg>
+      <canvas id="room" class="pix"></canvas>
       <div id="bubble" aria-live="polite"></div>
-      <button id="back" type="button">← Back to the block</button>
+      <button id="back" type="button">◂ Back to the block</button>
       <button id="browse" type="button">Browse the racks</button>
     </section>
 
     <section id="aerial" aria-label="The block from above">
-      <svg id="aerial-svg" preserveAspectRatio="xMidYMid slice"></svg>
+      <canvas id="aerial-cv" class="pix"></canvas>
       <div class="aerial-title">
         <h1>SMOKE THE CRACK</h1>
-        <p>One block. A store from every continent.</p>
-        <button id="drop" type="button">Drop in ↓</button>
+        <p>Vintage grails, sold on the block. A store from every continent.</p>
+        <button id="drop" type="button">Drop in ▾</button>
       </div>
     </section>
 
     <header id="hud">
       <div class="hud-brand">
         <span class="logo">SMOKE THE CRACK</span>
-        <span class="tag">global resell block</span>
+        <span class="tag">grails on the block</span>
       </div>
       <div class="searchbox">
         <input id="search" type="search" placeholder="Search store, country, brand…" autocomplete="off" aria-label="Search stores, countries and brands" />
@@ -50,8 +46,9 @@
     </header>
 
     <nav id="directory" aria-label="Stores on the block"></nav>
-    <p id="hint">Drag, scroll or ← → to walk · Tap a storefront to go in · Tap people to see what they’re wearing</p>
+    <p id="hint">Drag, scroll or ◂ ▸ to walk · Tap a shop to go in · Tap people to see their fit</p>
 
+    <div id="tip" hidden></div>
     <div id="ped-card" hidden></div>
 
     <aside id="market" aria-label="Marketplace">

@@ -2,7 +2,7 @@ import {
   ITEMS, ALL_ITEMS, VIP_ITEMS, NUCCI_PICKS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
   itemsForScope, COUNT_BY_COUNTRY, COUNT_BY_STORE, storeOfItem, isOpen,
 } from '../data/inventory.js';
-import { productArt } from './art.js';
+import { itemImg } from '../pix/items.js';
 
 const $ = (s) => document.querySelector(s);
 const money = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
@@ -66,7 +66,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
     const where = it.vip ? it.origin : `${loc.city}, ${loc.country}`;
     const st = it.vip ? null : storeOfItem(it);
     return `<article class="card${it.vip ? ' vip-card' : ''}">
-      <div class="art">${productArt(it)}<span class="cond">${esc(it.condition)}</span>${it.vip ? '<span class="badge">VIP ONLY</span>' : opts.pick ? '<span class="badge pick">NUCCI’S PICK</span>' : ''}</div>
+      <div class="art">${itemImg(it)}<span class="cond">${esc(it.condition)}</span>${it.vip ? '<span class="badge">VIP ONLY</span>' : opts.pick ? '<span class="badge pick">NUCCI’S PICK</span>' : ''}</div>
       <div class="body">
         <div class="row"><span class="brand">${esc(it.brand)}</span><span class="price">${money(it.price)}</span></div>
         <h3>${esc(it.name)}</h3>
@@ -178,7 +178,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
       ? items
           .map((it) => {
             const where = it.vip ? `Nucci’s Corner · VIP hold` : `${LOC_BY_ID[it.locId].city}, ${LOC_BY_ID[it.locId].country}`;
-            return `<li><div class="mini">${productArt(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(where)} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`;
+            return `<li><div class="mini">${itemImg(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(where)} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`;
           })
           .join('')
       : '<li class="empty">Your bag is empty. Walk the block and step into a store.</li>';
