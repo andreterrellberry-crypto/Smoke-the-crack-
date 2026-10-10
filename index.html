@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#02030a" />
+    <meta name="description" content="Smoke the Crack — a global clothing resell marketplace. Spin the Earth, pick a city, shop its archive." />
+    <title>Smoke the Crack — Global Resell</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230a3d91'/><path d='M20 40 Q40 30 55 45 T85 50' stroke='%235fb04a' stroke-width='10' fill='none'/><circle cx='62' cy='38' r='6' fill='%23ff3d2e'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body data-mode="intro">
+    <canvas id="scene" aria-label="Interactive 3D globe of inventory locations"></canvas>
+    <div id="labels" aria-hidden="true"></div>
+    <button id="earth-tag" type="button">◉ Earth · Shop</button>
+
+    <header id="hud">
+      <div class="brand">
+        <span class="logo">SMOKE THE CRACK</span>
+        <span class="tag">global resell</span>
+      </div>
+      <div class="searchbox">
+        <input id="search" type="search" placeholder="Search city, country, brand…" autocomplete="off" aria-label="Search locations and brands" />
+        <ul id="results" role="listbox"></ul>
+      </div>
+      <nav class="actions">
+        <button id="btn-system" type="button">☉ Solar System</button>
+        <button id="btn-zoomout" type="button">⤢ Full Earth</button>
+        <button id="btn-light" type="button">☾ Real Time</button>
+        <button id="shop-all" type="button">Shop All</button>
+        <button id="bag-btn" type="button" aria-label="Bag">Bag <span id="bag-count" hidden>0</span></button>
+      </nav>
+    </header>
+
+    <p id="hint"></p>
+
+    <section id="hero">
+      <h1>SMOKE<br />THE CRACK</h1>
+      <p>Archive & resell from every corner of the planet. Pick a city, shop what came from it.</p>
+      <div class="cta">
+        <button id="enter" type="button">Land on Earth</button>
+        <button id="explore" type="button" class="ghost">Explore the System</button>
+      </div>
+    </section>
+
+    <aside id="market" aria-label="Marketplace">
+      <div class="mhead">
+        <nav id="crumbs"></nav>
+        <button id="market-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="mtitle">
+        <div>
+          <h2 id="market-title">Global Stock</h2>
+          <p id="market-meta"></p>
+        </div>
+        <select id="sort" aria-label="Sort">
+          <option value="feat">Featured</option>
+          <option value="low">Price: Low → High</option>
+          <option value="high">Price: High → Low</option>
+          <option value="old">Oldest first</option>
+          <option value="new">Newest first</option>
+        </select>
+      </div>
+      <div id="grid"></div>
+    </aside>
+
+    <aside id="bag" aria-label="Bag">
+      <div class="mhead"><h2>Your Bag</h2><button id="bag-close" type="button" aria-label="Close">✕</button></div>
+      <ul id="bag-list"></ul>
+      <div class="bagfoot"><span>Total</span><b id="bag-total">$0</b></div>
+      <button id="checkout" type="button">Checkout</button>
+    </aside>
+
+    <div id="tip"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="lost" hidden>Graphics reset by your device — restoring the planet…</div>
+
+    <div id="loader">
+      <div class="ld-logo">SMOKE THE CRACK</div>
+      <div class="ld-track"><div id="load-bar"></div></div>
+      <p>Loading the planet…</p>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
