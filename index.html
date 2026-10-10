@@ -3,36 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#02030a" />
-    <meta name="description" content="Smoke the Crack — a global clothing resell marketplace. Spin the Earth, pick a continent or country, shop its archive." />
-    <title>Smoke the Crack — Global Resell</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230a3d91'/><path d='M20 40 Q40 30 55 45 T85 50' stroke='%235fb04a' stroke-width='10' fill='none'/><circle cx='62' cy='38' r='6' fill='%23ff3d2e'/></svg>" />
+    <meta name="theme-color" content="#2b1a14" />
+    <meta name="description" content="Smoke the Crack — a global clothing resell block. Walk the street, step into a store from every continent, shop its archive." />
+    <title>Smoke the Crack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='14' y='30' width='72' height='62' fill='%23a8452f' stroke='%232b1a14' stroke-width='6'/><path d='M8 34h84l-8-16H16z' fill='%23f4c430' stroke='%232b1a14' stroke-width='6'/><rect x='40' y='56' width='20' height='36' fill='%232e6b4a' stroke='%232b1a14' stroke-width='5'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Inter:wght@400;600;700;800&family=Lilita+One&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,700&family=Rye&family=Shojumaru&family=Titan+One&display=swap" rel="stylesheet" />
   </head>
-  <body>
-    <canvas id="scene" aria-label="Interactive 3D globe of inventory locations"></canvas>
-    <div id="labels" aria-hidden="true"></div>
+  <body data-mode="aerial">
+    <svg id="defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+    <div id="street-wrap">
+      <svg id="street" preserveAspectRatio="xMidYMax meet" aria-label="The block — tap a storefront to go inside"></svg>
+    </div>
+
+    <section id="interior" aria-label="Inside the store">
+      <svg id="room"></svg>
+      <div id="bubble" aria-live="polite"></div>
+      <button id="back" type="button">← Back to the block</button>
+      <button id="browse" type="button">Browse the racks</button>
+    </section>
+
+    <section id="aerial" aria-label="The block from above">
+      <svg id="aerial-svg" preserveAspectRatio="xMidYMid slice"></svg>
+      <div class="aerial-title">
+        <h1>SMOKE THE CRACK</h1>
+        <p>One block. A store from every continent.</p>
+        <button id="drop" type="button">Drop in ↓</button>
+      </div>
+    </section>
 
     <header id="hud">
-      <div class="brand">
+      <div class="hud-brand">
         <span class="logo">SMOKE THE CRACK</span>
-        <span class="tag">global resell</span>
+        <span class="tag">global resell block</span>
       </div>
       <div class="searchbox">
-        <input id="search" type="search" placeholder="Search continent, country, brand…" autocomplete="off" aria-label="Search locations and brands" />
+        <input id="search" type="search" placeholder="Search store, country, brand…" autocomplete="off" aria-label="Search stores, countries and brands" />
         <ul id="results" role="listbox"></ul>
       </div>
       <nav class="actions">
-        <button id="btn-zoomout" type="button">⤢ Full Earth</button>
         <button id="shop-all" type="button">Shop All</button>
         <button id="bag-btn" type="button" aria-label="Bag">Bag <span id="bag-count" hidden>0</span></button>
       </nav>
     </header>
 
-    <nav id="continents" aria-label="Continents"></nav>
-    <p id="hint">Drag to spin · Scroll / pinch to zoom · Tap a country beacon or pick a continent</p>
+    <nav id="directory" aria-label="Stores on the block"></nav>
+    <p id="hint">Drag, scroll or ← → to walk · Tap a storefront to go in · Tap people to see what they’re wearing</p>
+
+    <div id="ped-card" hidden></div>
 
     <aside id="market" aria-label="Marketplace">
       <div class="mhead">
@@ -41,7 +61,7 @@
       </div>
       <div class="mtitle">
         <div>
-          <h2 id="market-title">Global Stock</h2>
+          <h2 id="market-title">All Stock</h2>
           <p id="market-meta"></p>
         </div>
         <select id="sort" aria-label="Sort">
@@ -63,15 +83,7 @@
       <button id="checkout" type="button">Checkout</button>
     </aside>
 
-    <div id="tip"></div>
     <div id="toast" role="status" aria-live="polite"></div>
-    <div id="lost" hidden>Graphics reset by your device — restoring the planet…</div>
-
-    <div id="loader">
-      <div class="ld-logo">SMOKE THE CRACK</div>
-      <div class="ld-track"><div id="load-bar"></div></div>
-      <p>Loading the planet…</p>
-    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

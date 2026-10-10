@@ -1,79 +1,119 @@
 // Inventory source of truth. Swap this file (or fetch JSON from an API) to update stock.
-// Each location is a pin on the globe; items reference a location by id.
+// The city block has one storefront per region. A region with no stock renders as a construction site.
 
-// Navigation is continent → country. Cities only appear on product cards.
-export const CONTINENTS = [
-  { id: 'North America', lat: 42, lng: -100 },
-  { id: 'South America', lat: -15, lng: -58 },
-  { id: 'Europe', lat: 50, lng: 10 },
-  { id: 'Africa', lat: 4, lng: 18 },
-  { id: 'Asia', lat: 32, lng: 105 },
-  { id: 'Oceania', lat: -27, lng: 140 },
+export const STORES = [
+  {
+    id: 'north-america',
+    name: 'Uptown Thread Exchange',
+    region: 'North America',
+    countries: ['United States', 'Mexico'],
+    owner: 'Tyrell “T-Bone” Washington',
+    from: 'Harlem, New York',
+    greeting: 'Ayo, welcome in! Everything on these racks got a story.',
+  },
+  {
+    id: 'canada',
+    name: 'True North Trading Post',
+    region: 'Canada',
+    countries: ['Canada'],
+    owner: 'Gord McAllister',
+    from: 'Thunder Bay, Ontario',
+    greeting: 'Hey there, bud! Come in out of the cold, eh?',
+  },
+  {
+    id: 'south-america',
+    name: 'Casa Albuquerque',
+    region: 'South America',
+    countries: ['Brazil'],
+    owner: 'Luiza Albuquerque',
+    from: 'Rio de Janeiro',
+    greeting: 'Olá, bem-vindo! Every piece here has danced through Carnaval.',
+  },
+  {
+    id: 'europe',
+    name: 'Maison Dubois',
+    region: 'Europe',
+    countries: ['United Kingdom', 'France', 'Belgium', 'Netherlands', 'Italy', 'Germany', 'Sweden'],
+    owner: 'Henri Dubois',
+    from: 'Le Marais, Paris',
+    greeting: 'Bonjour, mon ami. The finest archive this side of the Seine.',
+  },
+  {
+    id: 'africa',
+    name: 'Adaeze’s Ankara House',
+    region: 'Africa',
+    countries: ['Nigeria', 'South Africa'],
+    owner: 'Mama Adaeze Okafor',
+    from: 'Surulere, Lagos',
+    greeting: 'Welcome, my dear! You are looking sharp already.',
+  },
+  {
+    id: 'asia',
+    name: 'Watanabe Shōten',
+    region: 'Asia',
+    countries: ['United Arab Emirates', 'India', 'China', 'Hong Kong SAR', 'South Korea', 'Japan'],
+    owner: 'Kenji Watanabe',
+    from: 'Harajuku, Tokyo',
+    greeting: 'Irasshaimase! Take your time, every piece is hand-picked.',
+  },
+  {
+    id: 'oceania',
+    name: 'Bondi Board & Thread',
+    region: 'Oceania',
+    countries: ['Australia'],
+    owner: 'Mick “Dingo” Harris',
+    from: 'Bondi Beach, Sydney',
+    greeting: 'G’day mate! Have a squiz, no worries.',
+  },
+  {
+    id: 'antarctica',
+    name: 'Polar Outfitters',
+    region: 'Antarctica',
+    countries: [],
+    owner: 'Nobody yet',
+    from: 'McMurdo Station',
+    greeting: '',
+  },
 ];
-
-// Beacon position per country (visual centre of where stock comes from)
-export const COUNTRIES = [
-  { id: 'United States', continent: 'North America', lat: 39.5, lng: -98.5 },
-  { id: 'Canada', continent: 'North America', lat: 52, lng: -100 },
-  { id: 'Mexico', continent: 'North America', lat: 23.6, lng: -102.5 },
-  { id: 'Brazil', continent: 'South America', lat: -10, lng: -52 },
-  { id: 'United Kingdom', continent: 'Europe', lat: 54, lng: -2.5 },
-  { id: 'France', continent: 'Europe', lat: 46.6, lng: 2.4 },
-  { id: 'Belgium', continent: 'Europe', lat: 50.6, lng: 4.6 },
-  { id: 'Netherlands', continent: 'Europe', lat: 52.3, lng: 5.5 },
-  { id: 'Italy', continent: 'Europe', lat: 42.8, lng: 12.5 },
-  { id: 'Germany', continent: 'Europe', lat: 51.1, lng: 10.4 },
-  { id: 'Sweden', continent: 'Europe', lat: 62, lng: 15 },
-  { id: 'Nigeria', continent: 'Africa', lat: 9.1, lng: 8.7 },
-  { id: 'South Africa', continent: 'Africa', lat: -29, lng: 24.7 },
-  { id: 'United Arab Emirates', continent: 'Asia', lat: 24, lng: 54 },
-  { id: 'India', continent: 'Asia', lat: 22, lng: 79 },
-  { id: 'China', continent: 'Asia', lat: 35.9, lng: 104.2 },
-  { id: 'Hong Kong SAR', continent: 'Asia', lat: 22.3, lng: 114.2 },
-  { id: 'South Korea', continent: 'Asia', lat: 36.5, lng: 127.9 },
-  { id: 'Japan', continent: 'Asia', lat: 36.2, lng: 138.3 },
-  { id: 'Australia', continent: 'Oceania', lat: -25.3, lng: 133.8 },
-];
-export const COUNTRY_BY_ID = Object.fromEntries(COUNTRIES.map((c) => [c.id, c]));
 
 // Cities (shown under each piece in the marketplace)
 export const LOCATIONS = [
-  { id: 'nyc', city: 'New York City', country: 'United States', lat: 40.7128, lng: -74.006 },
-  { id: 'la', city: 'Los Angeles', country: 'United States', lat: 34.0522, lng: -118.2437 },
-  { id: 'laguna', city: 'Laguna Beach', country: 'United States', lat: 33.5427, lng: -117.7854 },
-  { id: 'beaverton', city: 'Beaverton', country: 'United States', lat: 45.4871, lng: -122.8037 },
-  { id: 'chicago', city: 'Chicago', country: 'United States', lat: 41.8781, lng: -87.6298 },
-  { id: 'atl', city: 'Atlanta', country: 'United States', lat: 33.749, lng: -84.388 },
-  { id: 'honolulu', city: 'Honolulu', country: 'United States', lat: 21.3069, lng: -157.8583 },
-  { id: 'toronto', city: 'Toronto', country: 'Canada', lat: 43.6532, lng: -79.3832 },
-  { id: 'montreal', city: 'Montréal', country: 'Canada', lat: 45.5017, lng: -73.5673 },
-  { id: 'vancouver', city: 'Vancouver', country: 'Canada', lat: 49.2827, lng: -123.1207 },
-  { id: 'cdmx', city: 'Mexico City', country: 'Mexico', lat: 19.4326, lng: -99.1332 },
-  { id: 'rio', city: 'Rio de Janeiro', country: 'Brazil', lat: -22.9068, lng: -43.1729 },
-  { id: 'london', city: 'London', country: 'United Kingdom', lat: 51.5074, lng: -0.1278 },
-  { id: 'castleford', city: 'Castleford', country: 'United Kingdom', lat: 53.7253, lng: -1.3625 },
-  { id: 'stornoway', city: 'Stornoway', country: 'United Kingdom', lat: 58.209, lng: -6.3849 },
-  { id: 'paris', city: 'Paris', country: 'France', lat: 48.8566, lng: 2.3522 },
-  { id: 'antwerp', city: 'Antwerp', country: 'Belgium', lat: 51.2194, lng: 4.4025 },
-  { id: 'amsterdam', city: 'Amsterdam', country: 'Netherlands', lat: 52.3676, lng: 4.9041 },
-  { id: 'milan', city: 'Milan', country: 'Italy', lat: 45.4642, lng: 9.19 },
-  { id: 'florence', city: 'Florence', country: 'Italy', lat: 43.7696, lng: 11.2558 },
-  { id: 'ravarino', city: 'Ravarino', country: 'Italy', lat: 44.7239, lng: 11.0966 },
-  { id: 'berlin', city: 'Berlin', country: 'Germany', lat: 52.52, lng: 13.405 },
-  { id: 'herzo', city: 'Herzogenaurach', country: 'Germany', lat: 49.5672, lng: 10.8858 },
-  { id: 'stockholm', city: 'Stockholm', country: 'Sweden', lat: 59.3293, lng: 18.0686 },
-  { id: 'lagos', city: 'Lagos', country: 'Nigeria', lat: 6.5244, lng: 3.3792 },
-  { id: 'jozi', city: 'Johannesburg', country: 'South Africa', lat: -26.2041, lng: 28.0473 },
-  { id: 'dubai', city: 'Dubai', country: 'United Arab Emirates', lat: 25.2048, lng: 55.2708 },
-  { id: 'kolkata', city: 'Kolkata', country: 'India', lat: 22.5726, lng: 88.3639 },
-  { id: 'tokyo', city: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503 },
-  { id: 'kojima', city: 'Kojima', country: 'Japan', lat: 34.4597, lng: 133.8056 },
-  { id: 'osaka', city: 'Osaka', country: 'Japan', lat: 34.6937, lng: 135.5023 },
-  { id: 'seoul', city: 'Seoul', country: 'South Korea', lat: 37.5665, lng: 126.978 },
-  { id: 'beijing', city: 'Beijing', country: 'China', lat: 39.9042, lng: 116.4074 },
-  { id: 'hk', city: 'Hong Kong', country: 'Hong Kong SAR', lat: 22.3193, lng: 114.1694 },
-  { id: 'sydney', city: 'Sydney', country: 'Australia', lat: -33.8688, lng: 151.2093 },
-  { id: 'torquay', city: 'Torquay', country: 'Australia', lat: -38.3309, lng: 144.3266 },
+  { id: 'nyc', city: 'New York City', country: 'United States' },
+  { id: 'la', city: 'Los Angeles', country: 'United States' },
+  { id: 'laguna', city: 'Laguna Beach', country: 'United States' },
+  { id: 'beaverton', city: 'Beaverton', country: 'United States' },
+  { id: 'chicago', city: 'Chicago', country: 'United States' },
+  { id: 'atl', city: 'Atlanta', country: 'United States' },
+  { id: 'honolulu', city: 'Honolulu', country: 'United States' },
+  { id: 'toronto', city: 'Toronto', country: 'Canada' },
+  { id: 'montreal', city: 'Montréal', country: 'Canada' },
+  { id: 'vancouver', city: 'Vancouver', country: 'Canada' },
+  { id: 'cdmx', city: 'Mexico City', country: 'Mexico' },
+  { id: 'rio', city: 'Rio de Janeiro', country: 'Brazil' },
+  { id: 'london', city: 'London', country: 'United Kingdom' },
+  { id: 'castleford', city: 'Castleford', country: 'United Kingdom' },
+  { id: 'stornoway', city: 'Stornoway', country: 'United Kingdom' },
+  { id: 'paris', city: 'Paris', country: 'France' },
+  { id: 'antwerp', city: 'Antwerp', country: 'Belgium' },
+  { id: 'amsterdam', city: 'Amsterdam', country: 'Netherlands' },
+  { id: 'milan', city: 'Milan', country: 'Italy' },
+  { id: 'florence', city: 'Florence', country: 'Italy' },
+  { id: 'ravarino', city: 'Ravarino', country: 'Italy' },
+  { id: 'berlin', city: 'Berlin', country: 'Germany' },
+  { id: 'herzo', city: 'Herzogenaurach', country: 'Germany' },
+  { id: 'stockholm', city: 'Stockholm', country: 'Sweden' },
+  { id: 'lagos', city: 'Lagos', country: 'Nigeria' },
+  { id: 'jozi', city: 'Johannesburg', country: 'South Africa' },
+  { id: 'dubai', city: 'Dubai', country: 'United Arab Emirates' },
+  { id: 'kolkata', city: 'Kolkata', country: 'India' },
+  { id: 'tokyo', city: 'Tokyo', country: 'Japan' },
+  { id: 'kojima', city: 'Kojima', country: 'Japan' },
+  { id: 'osaka', city: 'Osaka', country: 'Japan' },
+  { id: 'seoul', city: 'Seoul', country: 'South Korea' },
+  { id: 'beijing', city: 'Beijing', country: 'China' },
+  { id: 'hk', city: 'Hong Kong', country: 'Hong Kong SAR' },
+  { id: 'sydney', city: 'Sydney', country: 'Australia' },
+  { id: 'torquay', city: 'Torquay', country: 'Australia' },
 ];
 
 // [locId, name, brand, type, price, size, condition, year, collection, designer, blurb, primary, accent]
@@ -151,14 +191,16 @@ export const ITEMS = RAW.map((r, i) => ({
 }));
 
 export const LOC_BY_ID = Object.fromEntries(LOCATIONS.map((l) => [l.id, l]));
+export const STORE_BY_ID = Object.fromEntries(STORES.map((s) => [s.id, s]));
+export const STORE_BY_COUNTRY = Object.fromEntries(STORES.flatMap((s) => s.countries.map((c) => [c, s])));
+export const storeOfItem = (it) => STORE_BY_COUNTRY[LOC_BY_ID[it.locId].country];
 
 export function itemsForScope(scope) {
-  // scope: { level: 'world' | 'continent' | 'country', value }
-  if (!scope || scope.level === 'world') return ITEMS;
-  return ITEMS.filter((it) => {
-    const country = LOC_BY_ID[it.locId].country;
-    return scope.level === 'country' ? country === scope.value : COUNTRY_BY_ID[country].continent === scope.value;
-  });
+  // scope: { level: 'all' | 'store' | 'country', value }
+  if (!scope || scope.level === 'all') return ITEMS;
+  return ITEMS.filter((it) =>
+    scope.level === 'country' ? LOC_BY_ID[it.locId].country === scope.value : storeOfItem(it).id === scope.value
+  );
 }
 
 export const COUNT_BY_COUNTRY = ITEMS.reduce((m, it) => {
@@ -166,3 +208,37 @@ export const COUNT_BY_COUNTRY = ITEMS.reduce((m, it) => {
   m[c] = (m[c] || 0) + 1;
   return m;
 }, {});
+
+export const COUNT_BY_STORE = Object.fromEntries(STORES.map((s) => [s.id, itemsForScope({ level: 'store', value: s.id }).length]));
+// No stock → the storefront is boarded up and can't be entered
+export const isOpen = (store) => COUNT_BY_STORE[store.id] > 0;
+
+// ---------- Nucci's Corner: VIP-only pieces + his picks from the rest of the block ----------
+const VIP_RAW = [
+  ['Cemetery Cross Leather Jacket', 'Chrome Hearts', 'jacket', 16500, 'L', 'Private Order', 2008, 'Made to order', 'Richard Stark', 'Hollywood, USA', 'Sterling cross hardware on buttery cowhide. Never hit a shop floor.', '#141414', '#d9d9d9'],
+  ['Air Jordan 1 High “Bred”', 'Nike', 'sneaker', 14200, 'US 10.5', 'Deadstock in box', 1985, 'Original Release', 'Peter Moore', 'Beaverton, USA', 'Original box, original paper. Nucci won’t say where he found them.', '#111111', '#c8102e'],
+  ['Gold Camo Shark Hoodie (Sample)', 'A Bathing Ape', 'hoodie', 6800, 'L', 'Sample – Unworn', 2006, 'Showroom sample', 'Nigo', 'Tokyo, Japan', 'Showroom sample that never went to production.', '#b8912f', '#111111'],
+  ['One-of-One Boro Kimono Coat', 'Kapital', 'coat', 5400, 'OS', 'New', 2019, 'Atelier piece', 'Kazuhiro Hiraki', 'Kojima, Japan', 'Hand-patched from century-old indigo scraps. Only one exists.', '#1f3a5f', '#e9dfc9'],
+  ['Pirate Boots', 'Vivienne Westwood', 'sneaker', 4900, 'UK 9', 'Archive – Excellent', 1981, '“Pirate” collection', 'Vivienne Westwood & Malcolm McLaren', 'London, UK', 'From the collection that launched a movement on the King’s Road.', '#5a3a1e', '#d4af37'],
+  ['Hand-Painted Gull Denim Jacket', 'Evisu', 'jacket', 3900, 'M', 'Vintage – Excellent', 1995, 'Early Osaka run', 'Hidehiko Yamane', 'Osaka, Japan', 'Hand-painted gulls on the back. Early Osaka-era piece.', '#203550', '#ffffff'],
+];
+export const VIP_ITEMS = VIP_RAW.map((r, i) => ({
+  id: `vip-${i}`,
+  vip: true,
+  name: r[0],
+  brand: r[1],
+  type: r[2],
+  price: r[3],
+  size: r[4],
+  condition: r[5],
+  year: r[6],
+  collection: r[7],
+  designer: r[8],
+  origin: r[9],
+  blurb: r[10],
+  color: r[11],
+  accent: r[12],
+}));
+const PICK_NAMES = ['“Riot Riot Riot” Bomber', '“Scab” Patchwork Jacket', 'Ice Jacket', 'Velvet Tuxedo Blazer', 'Air Jordan 1 High “Chicago”'];
+export const NUCCI_PICKS = PICK_NAMES.map((n) => ITEMS.find((i) => i.name === n)).filter(Boolean);
+export const ALL_ITEMS = [...ITEMS, ...VIP_ITEMS];
