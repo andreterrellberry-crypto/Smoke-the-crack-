@@ -444,16 +444,6 @@ export function catFrames() {
   };
   return [make(false), make(true)];
 }
-export function penguin() {
-  const [c, ctx] = canvas(20, 26);
-  rect(ctx, 4, 8, 11, 15, '#1c1e2a'); rect(ctx, 6, 11, 7, 11, '#f2f2f2'); rect(ctx, 5, 5, 9, 5, '#1c1e2a');
-  px(ctx, 7, 7, '#fff'); px(ctx, 11, 7, '#fff'); px(ctx, 8, 7, P.ink); px(ctx, 12, 7, P.ink);
-  rect(ctx, 9, 9, 3, 1, '#f29a2e'); rect(ctx, 5, 23, 4, 1, '#f29a2e'); rect(ctx, 11, 23, 4, 1, '#f29a2e');
-  rect(ctx, 4, 2, 11, 3, '#f6c42b'); rect(ctx, 3, 4, 13, 1, '#d9a41f');
-  rect(ctx, 15, 12, 2, 6, '#1c1e2a');
-  return outline(c);
-}
-
 const CAR_TYPES = ['sedan', 'taxi', 'lowrider', 'van', 'danfo', 'hatch'];
 export function carFrames(type, color, r) {
   const W = type === 'danfo' || type === 'van' ? 64 : type === 'lowrider' ? 66 : 58;

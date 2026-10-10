@@ -32,10 +32,10 @@ const ROOFS = {
   africa(ctx, x, y, w, h, r) { for (let i = 0; i < w; i++) rect(ctx, x + i, y, 1, h, i % 4 < 2 ? '#8a7a6a' : '#7a6a5a'); for (let i = 0; i < 8; i++) rect(ctx, x + Math.floor(r() * (w - 20)), y + Math.floor(r() * (h - 14)), 16 + Math.floor(r() * 10), 10, pick(r, ['#9a5a3a', '#8a4a2a', '#a8a4b0'])); circle(ctx, x + 130, y + 24, 10, '#1a1a1a', '#2a2a2a'); rect(ctx, x + 20, y + 66, 18, 12, '#e0b020'); },
   asia(ctx, x, y, w, h, r) { tarRoof(ctx, x, y, w, h, r, '#2e2e38'); for (let i = 0; i < 8; i++) ac(ctx, x + 10 + (i % 4) * 22, y + 12 + Math.floor(i / 4) * 16); rect(ctx, x + 108, y + 10, 40, 4, '#ff3fa4'); rect(ctx, x + 108, y + 60, 30, 20, '#2e8b57'); speckle(ctx, x + 108, y + 60, 30, 20, ['#3fa36a', '#1f6b3a'], 0.3, r); },
   oceania(ctx, x, y, w, h, r) { for (let j = 0; j < h; j++) rect(ctx, x, y + j, w, 1, j % 3 ? '#c9c6cf' : '#a8a4b0'); for (let i = 0; i < 3; i++) { rect(ctx, x + 20 + i * 44, y + 20, 34, 24, '#1c2f5e'); for (let k = 0; k < 34; k += 6) rect(ctx, x + 20 + i * 44 + k, y + 20, 1, 24, '#4a6fb0'); rect(ctx, x + 20 + i * 44, y + 32, 34, 1, '#4a6fb0'); } },
-  antarctica(ctx, x, y, w, h, r) { rect(ctx, x, y, w, h, '#7a5a3a'); speckle(ctx, x, y, w, h, ['#6a4a2a', '#8a6a4a'], 0.2, r); for (let i = 0; i < w; i += 4) { px(ctx, x + i, y, '#f6c42b'); px(ctx, x + i, y + h - 1, '#f6c42b'); } line(ctx, x + 20, y + 70, x + 140, y + 16, '#f6c42b'); line(ctx, x + 20, y + 71, x + 140, y + 17, '#d9a41f'); rect(ctx, x + 14, y + 64, 12, 12, '#f6c42b'); for (let i = 0; i < 3; i++) circle(ctx, x + 60 + i * 20, y + 50, 2, '#f6c42b'); rect(ctx, x + 100, y + 60, 30, 16, '#c89a5a'); },
+  construction(ctx, x, y, w, h, r) { rect(ctx, x, y, w, h, '#7a5a3a'); speckle(ctx, x, y, w, h, ['#6a4a2a', '#8a6a4a'], 0.2, r); for (let i = 0; i < w; i += 4) { px(ctx, x + i, y, '#f6c42b'); px(ctx, x + i, y + h - 1, '#f6c42b'); } line(ctx, x + 20, y + 70, x + 140, y + 16, '#f6c42b'); line(ctx, x + 20, y + 71, x + 140, y + 17, '#d9a41f'); rect(ctx, x + 14, y + 64, 12, 12, '#f6c42b'); for (let i = 0; i < 3; i++) circle(ctx, x + 60 + i * 20, y + 50, 2, '#f6c42b'); rect(ctx, x + 100, y + 60, 30, 16, '#c89a5a'); },
 };
 
-export function buildAerial(segs, width, stores) {
+export function buildAerial(segs, width, stores, openById = {}) {
   const r = rng(31);
   const W = width + 400;
   const [c, ctx] = canvas(W, AH);
@@ -58,7 +58,7 @@ export function buildAerial(segs, width, stores) {
   // our row
   for (const seg of segs) {
     const x = ox + seg.x;
-    if (seg.kind === 'store') ROOFS[seg.id](ctx, x, ROW, seg.w, DEPTH, r);
+    if (seg.kind === 'store') (openById[seg.id] === false ? ROOFS.construction : ROOFS[seg.id])(ctx, x, ROW, seg.w, DEPTH, r);
     else if (seg.kind === 'alley') { rect(ctx, x, ROW, seg.w, DEPTH, '#16121a'); rect(ctx, x + 6, ROW + 56, 22, 14, '#2e6b4a'); circle(ctx, x + seg.w / 2 + 10, ROW + 80, 4, '#2e2620', '#1a1410'); }
     else { tarRoof(ctx, x, ROW, seg.w, DEPTH, r); if (!seg.end) { rect(ctx, x + 6, ROW + 6, seg.w - 12, 8, '#f4efe2'); } }
   }
@@ -75,7 +75,7 @@ export function buildAerial(segs, width, stores) {
     const label = seg.kind === 'alley' ? "NUCCI'S" : stores[seg.id].region.toUpperCase();
     const w = measure(label, 'small') + 8;
     const lx = ox + seg.x + seg.w / 2 - w / 2, ly = ROW + DEPTH / 2 - 5;
-    rect(ctx, lx, ly, w, 11, P.ink); rect(ctx, lx + 1, ly + 1, w - 2, 9, seg.kind === 'alley' ? '#1a0f1e' : seg.id === 'antarctica' ? '#f6c42b' : '#f4efe2');
+    rect(ctx, lx, ly, w, 11, P.ink); rect(ctx, lx + 1, ly + 1, w - 2, 9, seg.kind === 'alley' ? '#1a0f1e' : openById[seg.id] === false ? '#f6c42b' : '#f4efe2');
     text(ctx, label, lx + 4, ly + 3, seg.kind === 'alley' ? '#f2c14e' : P.ink, { font: 'small' });
   }
   return { c, ox, streetY: sw + 8 };

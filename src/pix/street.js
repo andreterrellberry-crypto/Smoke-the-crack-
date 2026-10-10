@@ -168,10 +168,13 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
   const tags = Object.fromEntries(stores.map((s) => [s.id, { n: tagCanvas(s, false), h: tagCanvas(s, true) }]));
   const vipTag = neonSign('VIP ONLY', '#f2c14e', { font: 'small', bg: '#1a0f1e' });
   const psst = (() => {
-    const [c, x] = canvas(76, 16);
-    rect(x, 0, 0, 76, 12, P.ink); rect(x, 1, 1, 74, 10, '#f4efe2');
-    rect(x, 56, 12, 4, 2, P.ink); rect(x, 57, 11, 2, 2, '#f4efe2'); px(x, 58, 14, P.ink);
-    text(x, 'PSST. ON THE LIST?', 38, 4, P.ink, { font: 'small', align: 'center' });
+    const line1 = 'AYE BRO, I GOT THAT', line2 = 'NEW SHI...';
+    const w = Math.max(measure(line1, 'small'), measure(line2, 'small')) + 10;
+    const [c, x] = canvas(w, 22);
+    rect(x, 0, 0, w, 18, P.ink); rect(x, 1, 1, w - 2, 16, '#f4efe2');
+    rect(x, w - 22, 18, 4, 2, P.ink); rect(x, w - 21, 17, 2, 2, '#f4efe2'); px(x, w - 20, 20, P.ink);
+    text(x, line1, w / 2, 3, P.ink, { font: 'small', align: 'center' });
+    text(x, line2, w / 2, 10, '#b3201f', { font: 'small', align: 'center' });
     return c;
   })();
   const coneR = (() => {
@@ -393,7 +396,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
       const nf = nucciOpen ? nucci.open : Math.floor(t * 0.6) % 7 === 0 ? nucci.blink : nucci.closed;
       ctx.drawImage(nf, Math.round(alleyInfo.nucci.x - FW / 2 - cx), Math.round(oy + alleyInfo.nucci.y - FH + 1));
       const near = Math.abs(alleyInfo.nucci.x - (cx + viewW / 2)) < viewW * 0.35;
-      if ((near || hover === 'nucci') && !nucciOpen) ctx.drawImage(psst, Math.round(alleyInfo.nucci.x - 60 - cx), Math.round(oy + alleyInfo.nucci.y - 62));
+      if ((near || hover === 'nucci') && !nucciOpen) ctx.drawImage(psst, Math.round(alleyInfo.nucci.x - psst.width + 18 - cx), Math.round(oy + alleyInfo.nucci.y - 70));
       ctx.drawImage(vipTag, Math.round(alleyInfo.nucci.x - 10 - vipTag.width / 2 - cx), Math.round(oy + G - 164));
     }
     // loiterers + walkers, back to front

@@ -41,7 +41,7 @@ const street = createStreet({
       html = openById[h.store]
         ? `<b>${esc(st.name)}</b>${esc(st.owner)} · ${esc(st.from)}<em>${COUNT_BY_STORE[h.store]} pieces · tap to walk in</em>`
         : `<b>${esc(st.name)}</b>Under construction<em>No ${esc(st.region)} stock yet</em>`;
-    } else if (h?.nucci) html = `<b>Nucci’s Corner</b>VIP only<em>Tap if you’re on the list</em>`;
+    } else if (h?.nucci) html = `<b>Nucci’s Corner</b>“Aye bro, I got that new shi…”<em>VIP only · tap to see the coat</em>`;
     tip.innerHTML = html;
     tip.hidden = !html || matchMedia('(pointer: coarse)').matches;
     tip.style.transform = `translate(${Math.min(x + 16, innerWidth - 270)}px, ${y + 16}px)`;
@@ -233,7 +233,7 @@ function hidePed() {
 const aerial = $('#aerial');
 const acv = $('#aerial-cv');
 const actx = acv.getContext('2d');
-const aer = buildAerial(street.segs, street.width, STORE_BY_ID);
+const aer = buildAerial(street.segs, street.width, STORE_BY_ID, openById);
 const firstStore = street.segs.find((s) => s.kind === 'store');
 let as = 2, avw = 0, avh = 0;
 function frameAerial() {

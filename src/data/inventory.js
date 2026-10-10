@@ -22,7 +22,7 @@ export const STORES = [
   },
   {
     id: 'south-america',
-    name: 'Loja do Morro',
+    name: 'Casa Exclusivo',
     region: 'South America',
     countries: ['Brazil'],
     owner: 'Thiago “Mandrake” Souza',
@@ -64,15 +64,6 @@ export const STORES = [
     owner: 'Jayden “Shaz” Wilson',
     from: 'Mount Druitt, Western Sydney',
     greeting: 'Oi eshay brah! Fully sick heat in here, lad.',
-  },
-  {
-    id: 'antarctica',
-    name: 'Polar Outfitters',
-    region: 'Antarctica',
-    countries: [],
-    owner: 'Nobody yet',
-    from: 'McMurdo Station',
-    greeting: '',
   },
 ];
 

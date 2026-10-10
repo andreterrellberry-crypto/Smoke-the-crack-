@@ -208,7 +208,6 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
           const c = LOC_BY_ID[i.locId].country;
           add(`c-${c}`, { store: STORE_BY_COUNTRY[c].id, country: c, label: `${i.brand} — ${i.name}`, sub: `${STORE_BY_COUNTRY[c].name} · ${c}` });
         }
-      if ('antarctica'.includes(q)) add('antarctica', { store: 'antarctica', label: 'Antarctica', sub: 'Polar Outfitters · Under construction' });
     }
     results.innerHTML = out
       .slice(0, 9)

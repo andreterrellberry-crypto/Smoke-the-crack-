@@ -18,13 +18,12 @@ No images to download and no 3D engine: every building, person, car and garment 
 | --- | --- | --- | --- |
 | Uptown Thread Exchange | North America (US + Mexico) | Harlem, NYC | Tyrell “T-Bone” Washington: durag, white tee, chain, Timbs |
 | 6ix Side Thrift | Canada | Scarborough, Toronto | Jaylen “Fresh” Campbell: black puffer, toque, tech fleece |
-| Loja do Morro | South America | Rocinha, Rio | Thiago “Mandrake” Souza: Juliet shades, Brasil jersey, slides |
-| **Nucci’s Corner** (alley) | VIP only | — | Nucci: trench coat, fedora, hand over his face |
+| Casa Exclusivo | South America | Rocinha, Rio | Thiago “Mandrake” Souza: Juliet shades, Brasil jersey, slides |
+| **Nucci’s Corner** (alley) | VIP only | — | Nucci: trench coat, fedora, hand over his face. “Aye bro, I got that new shi…” |
 | Boutique du Bloc | Europe | Saint-Denis (93), Paris | Karim “Sacoche” Benali: survêt, sacoche, TNs |
 | Odogwu Vintage | Africa | Yaba, Lagos | Chidi “Odogwu” Okafor: bucket hat, Naija jersey, cargos |
 | Ura-Hara Stash | Asia | Shinjuku, Tokyo | Ryo “Kaiju” Tanaka: bleached spikes, camo hoodie |
 | Westie Grails | Oceania | Mount Druitt, Western Sydney | Jayden “Shaz” Wilson: polo, bumbag, TNs, socks up |
-| Polar Outfitters | Antarctica | — | Under construction |
 
 - **No stock = under construction.** Any region with zero items is boarded up with scaffolding, caution tape and cones, and can't be entered. Add stock and it opens automatically.
 - **Inside a store** the marketplace lists that region's pieces, with country chips to filter. The city each piece came from shows on its card.

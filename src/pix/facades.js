@@ -3,7 +3,7 @@
 import { P, canvas, rect, px, line, wire, dither, speckle, streaks, brick, concrete, grime, window_, shutter, tag, posters, acUnit, dish, fireEscape, pipe, trashBags, glow, outline, shade, pick } from './draw.js';
 import { text, measure } from './font.js';
 import { itemSprite } from './items.js';
-import { penguin, catFrames } from './sprites.js';
+import { catFrames } from './sprites.js';
 
 export const SW = 160; // store width
 export const ALLEY_W = 76;
@@ -165,7 +165,7 @@ export const FACADES = {
     rect(ctx, x, G - 60, SW, 60, '#3fa39a'); speckle(ctx, x, G - 60, SW, 60, ['#368f87', '#4ab3a9'], 0.08, r);
     brick(ctx, x + 120, G - 58, 18, 14, bricks, '#6e3a22', r, 5, 3);
     signBoard(ctx, x + 10, G - 58, 98, 16, '#f2eee2', '#1d6b4a');
-    text(ctx, 'LOJA DO MORRO', x + 59, G - 56, '#1d8a3a', { align: 'center', shadow: '#f4c430' });
+    text(ctx, 'CASA EXCLUSIVO', x + 59, G - 56, '#1d8a3a', { align: 'center', shadow: '#f4c430' });
     text(ctx, 'ROUPA • BONE • TENIS', x + 59, G - 47, '#c8102e', { align: 'center', font: 'small' });
     // roll-up door, open, clothes hanging inside
     rect(ctx, x + 12, G - 40, 64, 40, '#2a1e22');
@@ -320,17 +320,6 @@ export const FACADES = {
     tag(ctx, x + 102, G - 30, 26, r, P.neonPink);
     return { door: d, top: top - 6, holes: [...holes, [d.x, d.y, d.w, d.h]], neon: [{ x: x + 16, y: G - 58, c: neonSign('OPEN', P.neonYellow, { font: 'small' }) }] };
   },
-
-  // ANTARCTICA: empty shell behind hoarding — no stock yet
-  antarctica(ctx, x, G, r) {
-    const top = G - 120;
-    concrete(ctx, x + 10, top, SW - 20, 120, '#c8dce6', ['#b0c8d4', '#dbe8f0'], r, 0.1);
-    for (let f = 0; f < 3; f++) for (const wx of [20, 60, 100]) rect(ctx, x + wx, top + 10 + f * 26, 26, 16, '#3a4a58');
-    signBoard(ctx, x + 22, top - 14, 116, 12, '#f4f4f4', '#2a6f97');
-    text(ctx, 'POLAR OUTFITTERS', x + 80, top - 11, '#2a6f97', { align: 'center' });
-    const d = { x: x + 70, y: G - 44, w: 22, h: 44 };
-    return { door: d, top: top - 16, holes: [], neon: [] };
-  },
 };
 
 // Fluorescent tube (Lagos awning light)
@@ -358,7 +347,6 @@ export function construction(ctx, x, G, f, store, r) {
   text(ctx, `NO ${store.region.toUpperCase()} STOCK YET`, x + 80, G - 11, '#c8102e', { align: 'center', font: 'small' });
   for (let i = 0; i < SW; i += 2) { px(ctx, x + i, G - 42 + Math.round(Math.sin(i / 9) * 2), i % 8 < 4 ? '#f6c42b' : '#1a1a1a'); px(ctx, x + i, G - 43 + Math.round(Math.sin(i / 9) * 2), i % 8 < 4 ? '#f6c42b' : '#1a1a1a'); }
   for (const cx of [x + 30, x + 132]) { rect(ctx, cx, G - 10, 8, 10, '#ff7a1a'); rect(ctx, cx + 2, G - 14, 4, 4, '#ff7a1a'); rect(ctx, cx + 1, G - 7, 6, 2, '#f4f4f4'); rect(ctx, cx - 2, G - 1, 12, 1, '#c85a10'); }
-  ctx.drawImage(penguin(), x + 118, G - 26);
 }
 
 // ---------- Nucci's Corner ----------
