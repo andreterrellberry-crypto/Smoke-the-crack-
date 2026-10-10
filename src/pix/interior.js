@@ -2,8 +2,8 @@
 import { P, rng, pick, canvas, rect, px, line, dither, speckle, brick, concrete, glow, shade } from './draw.js';
 import { text } from './font.js';
 import { itemSprite } from './items.js';
-import { buildStander, OWNERS, FW, FH, catFrames } from './sprites.js';
-import { neonSign, glyphNeon } from './facades.js';
+import { buildStander, buildBooster, OWNERS, FW, FH, catFrames } from './sprites.js';
+import { neonSign, glyphNeon, vanRear } from './facades.js';
 
 const BASE_W = 208;
 export const RW = 288;
@@ -129,3 +129,28 @@ export function buildOwner(storeId) {
 }
 export const OWNER_FEET = 104;
 export { FW, FH, COUNTER_Y };
+
+// ---------- Booster Corner close-up: zoomed into the open trunk ----------
+export const TW = 240;
+export const TH = 170;
+export function buildTrunkScene(items) {
+  const r = rng(808);
+  const [c, ctx] = canvas(TW, TH);
+  brick(ctx, 0, 0, TW, TH, ['#3a2a34', '#342630', '#40303a', '#2e222a'], '#1e161c', r, 6, 3);
+  dither(ctx, 0, 0, TW, TH, '#0a060e');
+  for (let i = 0; i < TW; i += 3) { line(ctx, i, 4, i + 3, 30, '#4a4856'); line(ctx, i + 3, 4, i, 30, '#4a4856'); }
+  for (let i = 0; i < TW; i += 4) px(ctx, i, 2, '#9d9ba8');
+  text(ctx, 'BOOSTER CORNER', 196, 12, '#b45cff', { align: 'center', outline: '#120c14' });
+  rect(ctx, 0, 156, TW, 14, '#1a1620'); dither(ctx, 0, 156, TW, 14, '#26222c');
+  rect(ctx, 30, 162, 40, 2, '#5a3a7a'); rect(ctx, 150, 164, 30, 2, '#6a5a2a');
+  vanRear(ctx, 62, 38, 96, 118, r, items, { big: true });
+  rect(ctx, 50, 166, 124, 3, '#0a080c');
+  return c;
+}
+export function buildTrunkActor() {
+  return buildBooster();
+}
+// The booster leans into frame at 2x: crop the head + torso of his sprite
+export function drawBoosterBust(ctx, frame) {
+  ctx.drawImage(frame, 4, 0, 26, 34, 2, 104, 52, 68);
+}

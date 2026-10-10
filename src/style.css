@@ -74,7 +74,9 @@ button { cursor: pointer; }
 #directory button.here small { color: var(--ink); }
 #directory button.closed { background: repeating-linear-gradient(45deg, #f6c42b 0 8px, #2a2630 8px 16px); color: var(--paper); text-shadow: 1px 1px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink); }
 #directory button.closed small { color: var(--paper); }
-#directory button.vip { background: var(--plum); color: var(--gold); box-shadow: 0 0 0 2px var(--gold), var(--shadow); }
+#directory button.booster { background: #0d0a10; color: var(--gold); box-shadow: 0 0 0 2px var(--gold), var(--shadow); }
+#directory button.booster.here { background: var(--gold); color: #0d0a10; }
+#directory button.booster.here small { color: #0d0a10; }
 #hint { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); margin: 0; padding: 4px 10px; background: rgba(12, 10, 16, 0.8); color: var(--muted); font-size: 13px; z-index: 20; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
 #directory, #hint { transition: opacity 0.3s; }
 body[data-mode='interior'] #directory, body[data-mode='interior'] #hint, body[data-mode='aerial'] #directory, body[data-mode='aerial'] #hint, body.panel-open #hint, body.panel-open #directory { opacity: 0; pointer-events: none; }
@@ -160,16 +162,17 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
 .add.in { background: var(--asphalt); color: var(--neon-y); }
 .add:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 
-/* VIP */
-#market.vip { background: var(--plum); box-shadow: 0 0 0 3px var(--gold), 10px 10px 0 3px var(--ink); }
-#market.vip .mtitle h2 { color: var(--gold); text-shadow: 3px 3px 0 #5a1f6a; }
-#market.vip .crumb.on { background: var(--gold); }
-#market.vip .card { background: #2a1830; }
-#market.vip .art { background: repeating-conic-gradient(#3b1f45 0 25%, #341a3e 0 50%) 0 0 / 12px 12px; }
-#market.vip .price { color: var(--gold); }
-#market.vip .where, #market.vip .goto { color: #ff8fe0; }
-#market.vip .add { background: var(--gold); }
-#market.vip .add.in { background: var(--plum); color: var(--gold); }
+/* Booster Corner: black and gold, like the grill */
+#market.booster { background: #0d0a10; box-shadow: 0 0 0 3px var(--gold), 10px 10px 0 3px var(--ink); }
+#market.booster .mtitle h2 { color: var(--gold); text-shadow: 3px 3px 0 #6a4a10; }
+#market.booster .crumb.on { background: var(--gold); }
+#market.booster .card { background: #17131c; }
+#market.booster .art { background: repeating-conic-gradient(#221c26 0 25%, #1c1720 0 50%) 0 0 / 12px 12px; }
+#market.booster .badge { background: var(--gold); color: #0d0a10; }
+#market.booster .price { color: var(--gold); }
+#market.booster .where { color: #ff8fe0; }
+#market.booster .add { background: var(--gold); }
+#market.booster .add.in { background: #0d0a10; color: var(--gold); }
 
 /* Bag */
 #bag-list { list-style: none; margin: 0; padding: 0 14px; flex: 1; overflow: auto; }
@@ -196,7 +199,7 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
   .searchbox { order: 3; flex-basis: 100%; max-width: none; }
   .actions button { padding: 5px 9px; font-size: 14px; }
   #market { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 58vh; border-width: 4px 0 0; box-shadow: 0 -3px 0 var(--neon-y); transform: translateY(105%); }
-  #market.vip { box-shadow: 0 -3px 0 var(--gold); }
+  #market.booster { box-shadow: 0 -3px 0 var(--gold); }
   #bag { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 72vh; border-width: 4px 0 0; box-shadow: 0 -3px 0 var(--neon-p); transform: translateY(105%); }
   #grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px 10px 30px; }
   .mtitle h2 { font-size: 15px; }

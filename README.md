@@ -19,7 +19,7 @@ No images to download and no 3D engine: every building, person, car and garment 
 | Uptown Thread Exchange | North America (US + Mexico) | Harlem, NYC | Tyrell “T-Bone” Washington: durag, white tee, chain, Timbs |
 | 6ix Side Thrift | Canada | Scarborough, Toronto | Jaylen “Fresh” Campbell: black puffer, toque, tech fleece |
 | Casa Exclusivo | South America | Rocinha, Rio | Thiago “Mandrake” Souza: Juliet shades, Brasil jersey, slides |
-| **Nucci’s Corner** (alley) | VIP only | — | Nucci: trench coat, fedora, hand over his face. “Aye bro, I got that new shi…” |
+| **Booster Corner** (alley) | Rare finds | — | The booster: hood up, face in shadow, gold grill. “Ain’t nobody got these.” |
 | Boutique du Bloc | Europe | Saint-Denis (93), Paris | Karim “Sacoche” Benali: survêt, sacoche, TNs |
 | Odogwu Vintage | Africa | Yaba, Lagos | Chidi “Odogwu” Okafor: bucket hat, Naija jersey, cargos |
 | Ura-Hara Stash | Asia | Shinjuku, Tokyo | Ryo “Kaiju” Tanaka: bleached spikes, camo hoodie |
@@ -27,17 +27,17 @@ No images to download and no 3D engine: every building, person, car and garment 
 
 - **No stock = under construction.** Any region with zero items is boarded up with scaffolding, caution tape and cones, and can't be entered. Add stock and it opens automatically.
 - **Inside a store** the marketplace lists that region's pieces, with country chips to filter. The city each piece came from shows on its card.
-- **Nucci's Corner**: tap the alley and Nucci opens his coat. His panel has off-menu VIP pieces you can only request a hold on, plus his picks from the other stores.
+- **Booster Corner**: a van backed into the alley with its rear doors open. Tap the trunk and the camera zooms into it. The booster's stock is rare pieces you won't find anywhere else, from $25 bootlegs and staff-only tees to five-figure grails.
 - **Pedestrians** wear real stock. Tap one to see the piece, add it to your bag, or walk to the store that sells it.
 
 ## Files
 
 | What | File |
 | --- | --- |
-| Stores, owners, inventory, VIP pieces | `src/data/inventory.js` |
+| Stores, owners, inventory, booster stock | `src/data/inventory.js` |
 | Pixel toolkit (bricks, windows, shutters, graffiti, wires, glow) | `src/pix/draw.js` |
 | Bitmap sign fonts (5x7, 3x5) | `src/pix/font.js` |
-| Character sprites, owners, Nucci, cars, pigeons, cat | `src/pix/sprites.js` |
+| Character sprites, owners, the booster, cars, pigeons, cat | `src/pix/sprites.js` |
 | Neighbourhood storefronts, alley, construction, street furniture | `src/pix/facades.js` |
 | Street engine: camera, parallax, people, traffic, neon | `src/pix/street.js` |
 | Aerial intro | `src/pix/aerial.js` |
@@ -47,7 +47,7 @@ No images to download and no 3D engine: every building, person, car and garment 
 | Flow (intro → street → door → interior) | `src/main.js` |
 
 ### Adding stock
-Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed in one store's `countries`. Window displays, racks, counts, pedestrians' outfits and the directory all update on their own. VIP pieces live in `VIP_RAW`; Nucci's picks are `PICK_NAMES`.
+Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed in one store's `countries`. Window displays, racks, counts, pedestrians' outfits and the directory all update on their own. Booster Corner stock lives in `BOOSTER_RAW` (the last column is the rarity badge).
 
 ## Controls
 - Drag, scroll, or ← → to walk the block. The directory bar at the bottom jumps to any store.

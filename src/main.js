@@ -1,8 +1,8 @@
 import './style.css';
-import { STORES, ITEMS, STORE_BY_ID, LOC_BY_ID, COUNT_BY_STORE, itemsForScope, storeOfItem, isOpen } from './data/inventory.js';
+import { STORES, ITEMS, BOOSTER_ITEMS, STORE_BY_ID, LOC_BY_ID, COUNT_BY_STORE, itemsForScope, storeOfItem, isOpen } from './data/inventory.js';
 import { createStreet } from './pix/street.js';
 import { buildAerial, topCar, topPerson, AH } from './pix/aerial.js';
-import { buildRoom, buildOwner, drawCounter, RW, RH, OWNER_X, OWNER_FEET, FW, FH } from './pix/interior.js';
+import { buildRoom, buildOwner, drawCounter, buildTrunkScene, buildTrunkActor, drawBoosterBust, RW, RH, TW, TH, OWNER_X, OWNER_FEET, FW, FH } from './pix/interior.js';
 import { canvas } from './pix/draw.js';
 import { createMarket } from './ui/market.js';
 import { itemImg } from './pix/items.js';
@@ -31,7 +31,8 @@ const street = createStreet({
   countById: COUNT_BY_STORE,
   pedItems: ITEMS.filter((i) => openById[storeOfItem(i).id]),
   onStore: (id) => goStore(id),
-  onNucci: () => goNucci(),
+  boosterItems: BOOSTER_ITEMS,
+  onBooster: () => goBooster(),
   onPedestrian: showPed,
   onHover: (h, x, y) => {
     let html = '';
@@ -41,7 +42,7 @@ const street = createStreet({
       html = openById[h.store]
         ? `<b>${esc(st.name)}</b>${esc(st.owner)} · ${esc(st.from)}<em>${COUNT_BY_STORE[h.store]} pieces · tap to walk in</em>`
         : `<b>${esc(st.name)}</b>Under construction<em>No ${esc(st.region)} stock yet</em>`;
-    } else if (h?.nucci) html = `<b>Nucci’s Corner</b>“Aye bro, I got that new shi…”<em>VIP only · tap to see the coat</em>`;
+    } else if (h?.booster) html = `<b>Booster Corner</b>“Ain’t nobody got these.”<em>${BOOSTER_ITEMS.length} rare pieces · tap the trunk</em>`;
     tip.innerHTML = html;
     tip.hidden = !html || matchMedia('(pointer: coarse)').matches;
     tip.style.transform = `translate(${Math.min(x + 16, innerWidth - 270)}px, ${y + 16}px)`;
@@ -51,9 +52,8 @@ const street = createStreet({
 // ---------- Marketplace ----------
 const market = createMarket({
   onGoStore: (id, country) => goStore(id, country),
-  onGoNucci: () => goNucci(),
-  onClose: (scope) => {
-    if (scope.level === 'nucci') street.setNucciOpen(false);
+  onGoBooster: () => goBooster(),
+  onClose: () => {
     document.body.classList.remove('panel-open');
     frameRoom();
   },
@@ -70,12 +70,12 @@ const dir = $('#directory');
 dir.innerHTML = street.segs
   .filter((s) => s.kind !== 'corner')
   .map((s) => {
-    if (s.kind === 'alley') return `<button data-nucci="1" class="vip">Nucci’s Corner <small>VIP</small></button>`;
+    if (s.kind === 'alley') return `<button data-booster="1" class="booster">Booster Corner <small>RARE</small></button>`;
     const st = STORE_BY_ID[s.id];
     return `<button data-store="${s.id}" class="${openById[s.id] ? '' : 'closed'}">${esc(st.region)} <small>${openById[s.id] ? COUNT_BY_STORE[s.id] : 'SOON'}</small></button>`;
   })
   .join('');
-dir.querySelectorAll('button').forEach((b) => (b.onclick = () => (b.dataset.nucci ? goNucci() : goStore(b.dataset.store))));
+dir.querySelectorAll('button').forEach((b) => (b.onclick = () => (b.dataset.booster ? goBooster() : goStore(b.dataset.store))));
 let hereId;
 function updateDirectory() {
   const cx = street.camX + street.viewW / 2;
@@ -83,7 +83,7 @@ function updateDirectory() {
   const id = seg ? seg.id : null;
   if (id === hereId) return;
   hereId = id;
-  dir.querySelectorAll('button').forEach((b) => b.classList.toggle('here', (b.dataset.store || (b.dataset.nucci && 'nucci')) === id));
+  dir.querySelectorAll('button').forEach((b) => b.classList.toggle('here', (b.dataset.store || (b.dataset.booster && 'booster')) === id));
   dir.querySelector('.here')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 
@@ -99,7 +99,6 @@ async function goStore(id, country) {
   }
   const token = ++navToken;
   market.close();
-  street.setNucciOpen(false);
   const arrived = await street.walkToStore(id);
   if (token !== navToken) return;
   if (!openById[id]) return market.showToast(`${st.name} is under construction. No ${st.region} stock yet, check back soon.`);
@@ -115,7 +114,7 @@ async function enterStore(id, country) {
   const d = street.doorScreen(id);
   streetWrap.style.transformOrigin = `${d.x}px ${d.y}px`;
   streetWrap.classList.add('ready', 'zoom');
-  openRoom(st);
+  openScene(storeScene(st));
   await wait(650);
   street.setEntering(null);
   mode = 'interior';
@@ -139,33 +138,65 @@ async function exitInterior() {
   await wait(450);
 }
 
-async function goNucci() {
+// Booster Corner: walk up to the van, then the camera zooms straight into the open trunk
+async function goBooster() {
   hidePed();
   finishIntro(true);
-  if (mode === 'interior') await exitInterior();
+  if (mode === 'interior') {
+    if (currentStore === 'booster') return openMarket({ level: 'booster' });
+    await exitInterior();
+  }
   const token = ++navToken;
   market.close();
-  const arrived = await street.walkToNucci(panelPx());
+  const arrived = await street.walkToBooster();
   if (!arrived || token !== navToken) return;
-  street.setNucciOpen(true);
-  await wait(600);
-  if (token === navToken) openMarket({ level: 'nucci' });
+  tip.hidden = true;
+  await wait(250);
+  const t = street.trunkScreen();
+  streetWrap.style.transformOrigin = `${t.x}px ${t.y}px`;
+  streetWrap.classList.add('ready', 'zoom');
+  openScene(trunkScene());
+  await wait(650);
+  if (token !== navToken) return;
+  mode = 'interior';
+  currentStore = 'booster';
+  street.setActive(false);
+  $('#interior').classList.add('show');
+  document.body.dataset.mode = 'interior';
+  openMarket({ level: 'booster' });
 }
 
-// ---------- Interior ----------
+// ---------- Interior scenes (store rooms + the booster's trunk) ----------
 const roomCv = $('#room');
 const rctx = roomCv.getContext('2d');
-roomCv.width = RW;
-roomCv.height = RH;
 let room = null;
-function openRoom(st) {
+function storeScene(st) {
   const { room: bg, counterColor } = buildRoom(st, itemsByStore[st.id]);
   const owner = buildOwner(st.id);
-  room = { st, bg, owner, counterColor, t: 0 };
+  return {
+    bg, actor: owner, w: RW, h: RH, focusX: OWNER_X, focusY: 76, bustH: 56, bustFX: 0.24,
+    who: st.owner, where: `${st.name} · ${st.from}`, line: st.greeting,
+    draw(fr) {
+      rctx.drawImage(fr, OWNER_X - FW / 2, OWNER_FEET - FH + 1);
+      drawCounter(rctx, counterColor, st.name);
+    },
+  };
+}
+function trunkScene() {
+  return {
+    bg: buildTrunkScene(BOOSTER_ITEMS), actor: buildTrunkActor(), w: TW, h: TH, focusX: 96, focusY: 100, bustH: 90, bustFX: 0.5, phoneFocusX: 70, phoneFocusY: 105,
+    who: 'The Booster', where: 'Booster Corner · back of the van', line: 'Ain’t nobody got these.',
+    draw(fr) { drawBoosterBust(rctx, fr); },
+  };
+}
+function openScene(scene) {
+  room = { ...scene, t: 0 };
+  roomCv.width = scene.w;
+  roomCv.height = scene.h;
   const [pc, pctx] = canvas(20, 22);
-  pctx.drawImage(owner.idle, 6, 0, 20, 22, 0, 0, 20, 22);
+  pctx.drawImage(scene.actor.idle, 6, 0, 20, 22, 0, 0, 20, 22);
   pc.className = 'pix';
-  $('#bubble').innerHTML = `<div class="portrait"></div><div><b>${esc(st.owner)}</b><span>${esc(st.name)} · ${esc(st.from)}</span><p>“${esc(st.greeting)}”</p></div>`;
+  $('#bubble').innerHTML = `<div class="portrait"></div><div><b>${esc(scene.who)}</b><span>${esc(scene.where)}</span><p>“${esc(scene.line)}”</p></div>`;
   $('#bubble .portrait').appendChild(pc);
   renderRoom(0);
   frameRoom();
@@ -176,24 +207,26 @@ function renderRoom(dt) {
   const t = room.t;
   rctx.imageSmoothingEnabled = false;
   rctx.drawImage(room.bg, 0, 0);
-  const o = room.owner;
-  const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.14 ? o.blink : o.idle;
-  rctx.drawImage(fr, OWNER_X - FW / 2, OWNER_FEET - FH + 1);
-  drawCounter(rctx, room.counterColor, room.st.name);
+  const o = room.actor;
+  const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.18 ? o.blink : o.idle;
+  room.draw(fr);
 }
-// Scale the room to cover the screen and keep the owner centred in whatever space the panel leaves
+// Scale the scene to cover the screen and keep its subject centred in whatever space the panel leaves
 function frameRoom() {
   if (!room) return;
+  const { w, h, bustH, bustFX } = room;
+  let { focusX, focusY } = room;
   const open = document.body.classList.contains('panel-open');
   const wide = isWide();
   const aw = wide ? innerWidth - (open ? panelPx() : 0) : innerWidth;
   const ay = !wide && open ? 104 : 0;
   const ah = !wide && open ? innerHeight * 0.42 - 104 : innerHeight;
-  const phoneBust = !wide && open; // phone + bottom sheet: close-up on the owner, left of the dialogue box
-  const s = phoneBust ? Math.max(innerWidth / RW, ah / 56) : Math.max(innerWidth / RW, (wide || !open ? innerHeight : ah) / RH);
-  const cw = RW * s, ch = RH * s;
-  const left = Math.min(0, Math.max(innerWidth - cw, (phoneBust ? aw * 0.24 : aw / 2) - OWNER_X * s));
-  let top = ay + ah / 2 - 76 * s;
+  const phoneBust = !wide && open; // phone + bottom sheet: close-up on the subject, beside the dialogue box
+  if (phoneBust && room.phoneFocusX) { focusX = room.phoneFocusX; focusY = room.phoneFocusY; }
+  const s = phoneBust ? Math.max(innerWidth / w, ah / bustH) : Math.max(innerWidth / w, (wide || !open ? innerHeight : ah) / h);
+  const cw = w * s, ch = h * s;
+  const left = Math.min(0, Math.max(innerWidth - cw, (phoneBust ? aw * bustFX : aw / 2) - focusX * s));
+  let top = ay + ah / 2 - focusY * s;
   top = wide || !open ? Math.min(0, Math.max(innerHeight - ch, top)) : Math.min(ay, top);
   Object.assign(roomCv.style, { width: `${cw}px`, height: `${ch}px`, left: `${left}px`, top: `${top}px` });
 }

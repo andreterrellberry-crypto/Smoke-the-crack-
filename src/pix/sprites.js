@@ -232,7 +232,7 @@ function sideFrame(spec, poseName, blink = false) {
   return outline(c);
 }
 
-// ---------- FRONT VIEW (owners, loiterers, Nucci) ----------
+// ---------- FRONT VIEW (owners, loiterers, the booster) ----------
 function frontFrame(spec, o = {}) {
   const [c, ctx] = canvas(FW, FH);
   const t = spec.top, s = spec.skin, sd = shade(s, -0.12);
@@ -251,21 +251,11 @@ function frontFrame(spec, o = {}) {
     }
     shoes(ctx, lx - (back ? 1 : 0), 45, 5, spec.shoes || {}, back ? -1 : 1);
   }
-  // backpack straps / coat back
-  if (o.coatOpen) {
-    rect(ctx, 10, 18, 12, 22, '#3b1250');
-    for (let y = 20; y < 38; y += 4) { rect(ctx, 11, y, 10, 1, GOLD2); rect(ctx, 12 + ((y / 4) % 3) * 3, y + 1, 2, 2, GOLD); px(ctx, 17 + ((y / 4) % 2) * 2, y + 1, '#d9d9e0'); }
-  }
   // torso
   const yEnd = long ? 40 : 31;
   for (let y = 18; y <= yEnd; y++) {
     const flare = long && y > 31 ? Math.floor((y - 31) / 3) : 0;
     const x0 = 10 - wide - flare, x1 = 21 + wide + flare;
-    if (o.coatOpen && y > 19) {
-      rect(ctx, x0 - 3, y, 5, 1, tc); px(ctx, x0 - 3, y, tdk);
-      rect(ctx, x1 - 1, y, 5, 1, tc); px(ctx, x1 + 3, y, tlt);
-      continue;
-    }
     rect(ctx, x0, y, x1 - x0 + 1, 1, tc);
     px(ctx, x0, y, tdk); px(ctx, x1, y, tlt);
   }
@@ -280,7 +270,7 @@ function frontFrame(spec, o = {}) {
     case 'polo': rect(ctx, 13, 17, 6, 2, a); px(ctx, 15, 19, '#ffffff'); px(ctx, 15, 21, '#ffffff'); rect(ctx, 18, 21, 2, 1, t.logo || '#2fa84f'); break;
     case 'flannel': for (let y = 18; y <= 31; y++) for (let x = 10; x <= 21; x++) if (((x >> 1) + (y >> 1)) % 2 === 0) px(ctx, x, y, a); break;
     case 'tank': rect(ctx, 13, 18, 6, 2, s); if (t.logo !== false) rect(ctx, 14, 22, 4, 2, a); break;
-    case 'trench': case 'parka': if (!o.coatOpen) { line(ctx, 12, 17, 15, 24, tdk); line(ctx, 19, 17, 16, 24, tdk); rect(ctx, 10, 29, 12, 1, shade(tc, -0.25)); rect(ctx, 15, 24, 1, 16, tdk); } rect(ctx, 11, 15, 3, 4, tdk); rect(ctx, 18, 15, 3, 4, tdk); break;
+    case 'trench': case 'parka': line(ctx, 12, 17, 15, 24, tdk); line(ctx, 19, 17, 16, 24, tdk); rect(ctx, 10, 29, 12, 1, shade(tc, -0.25)); rect(ctx, 15, 24, 1, 16, tdk); rect(ctx, 11, 15, 3, 4, tdk); rect(ctx, 18, 15, 3, 4, tdk); break;
     case 'jacket': rect(ctx, 15, 18, 1, 13, a); rect(ctx, 12, 16, 8, 2, a); rect(ctx, 10, 30, 12, 1, a); break;
   }
   // arms
@@ -291,11 +281,6 @@ function frontFrame(spec, o = {}) {
     if (pose === 'wave') {
       for (let i = 0; i < 9; i++) rect(ctx, x + (side === 'r' ? Math.round(i * 0.5) : -Math.round(i * 0.5)), 19 - i, armW, 1, short && i > 3 ? s : tc);
       rect(ctx, x + (side === 'r' ? 4 : -3), 8, 3, 3, s);
-      return;
-    }
-    if (pose === 'face') {
-      line(ctx, x, 19, x - 3, 24, tc); line(ctx, x + 1, 19, x - 2, 24, tc); line(ctx, x + 2, 19, x - 1, 24, tc);
-      line(ctx, x - 3, 24, 17, 15, tc); line(ctx, x - 2, 24, 18, 15, tc);
       return;
     }
     for (let y = 19; y <= 29; y++) rect(ctx, x, y, armW, 1, t.type === 'tank' || (short && y > 22) ? (side === 'l' ? sd : s) : side === 'l' ? tdk : tc);
@@ -310,11 +295,18 @@ function frontFrame(spec, o = {}) {
   for (const [y, a0, b0] of rows) { rect(ctx, a0, y, b0 - a0 + 1, 1, s); px(ctx, a0, y, sd); }
   rect(ctx, 10, 9, 1, 3, sd); rect(ctx, 21, 9, 1, 3, sd);
   const hc = spec.hair?.color || '#1a1210';
-  if (o.blink) { rect(ctx, 13, 10, 2, 1, P.ink); rect(ctx, 17, 10, 2, 1, P.ink); }
-  else { px(ctx, 13, 10, '#ffffff'); px(ctx, 14, 10, P.ink); px(ctx, 14, 9, P.ink); px(ctx, 17, 10, P.ink); px(ctx, 17, 9, P.ink); px(ctx, 18, 10, '#ffffff'); }
-  rect(ctx, 13, 8, 2, 1, hc); rect(ctx, 17, 8, 2, 1, hc);
-  px(ctx, 15, 12, sd); px(ctx, 16, 12, sd);
-  if (o.talk) { rect(ctx, 14, 13, 4, 2, '#5a1a22'); px(ctx, 15, 13, '#f4f4f4'); } else rect(ctx, 14, 13, 4, 1, shade(s, -0.3));
+  if (spec.shadowFace) {
+    // face lost in shadow: only the gold grill catches the light
+    if (o.talk) { rect(ctx, 13, 12, 6, 3, '#2a0d10'); rect(ctx, 13, 12, 6, 1, GOLD); rect(ctx, 13, 14, 6, 1, GOLD2); px(ctx, 14, 12, '#fff3b0'); }
+    else { rect(ctx, 13, 13, 6, 1, GOLD); px(ctx, 15, 13, GOLD2); px(ctx, 17, 13, GOLD2); px(ctx, 13, 13, '#fff3b0'); }
+    if (o.blink) { px(ctx, 19, 11, '#ffffff'); px(ctx, 18, 12, '#fff3b0'); px(ctx, 20, 12, '#fff3b0'); px(ctx, 19, 13, '#ffffff'); }
+  } else {
+    if (o.blink) { rect(ctx, 13, 10, 2, 1, P.ink); rect(ctx, 17, 10, 2, 1, P.ink); }
+    else { px(ctx, 13, 10, '#ffffff'); px(ctx, 14, 10, P.ink); px(ctx, 14, 9, P.ink); px(ctx, 17, 10, P.ink); px(ctx, 17, 9, P.ink); px(ctx, 18, 10, '#ffffff'); }
+    rect(ctx, 13, 8, 2, 1, hc); rect(ctx, 17, 8, 2, 1, hc);
+    px(ctx, 15, 12, sd); px(ctx, 16, 12, sd);
+    if (o.talk) { rect(ctx, 14, 13, 4, 2, '#5a1a22'); px(ctx, 15, 13, '#f4f4f4'); } else rect(ctx, 14, 13, 4, 1, shade(s, -0.3));
+  }
   const ac = spec.acc || {};
   if (ac.beard) { rect(ctx, 11, 12, 10, 2, hc); rect(ctx, 12, 14, 8, 2, hc); rect(ctx, 14, 13, 4, 1, shade(s, -0.3)); }
   if (ac.stache) rect(ctx, 13, 12, 6, 1, hc);
@@ -353,12 +345,6 @@ function frontFrame(spec, o = {}) {
   const e = spec.eyes;
   if (e?.type === 'juliet') { rect(ctx, 11, 9, 10, 2, e.color || P.neonCyan); rect(ctx, 11, 8, 10, 1, '#d9d9e0'); px(ctx, 13, 9, '#ffffff'); px(ctx, 18, 9, '#ffffff'); }
   else if (e) { rect(ctx, 12, 9, 3, 2, '#0d0b10'); rect(ctx, 17, 9, 3, 2, '#0d0b10'); rect(ctx, 15, 9, 2, 1, '#0d0b10'); }
-  if (o.right === 'face') {
-    // hand pulled up over the lower face
-    rect(ctx, 12, 11, 8, 4, s); rect(ctx, 12, 11, 8, 1, sd);
-    for (let x = 13; x < 20; x += 2) px(ctx, x, 13, sd);
-    rect(ctx, 19, 15, 3, 2, tc);
-  }
   if (ac.chain) { for (let i = 0; i < 4; i++) { px(ctx, 13 + i, 18 + i, GOLD); px(ctx, 19 - i, 18 + i, GOLD); } rect(ctx, 15, 22, 2, 2, GOLD); }
   if (ac.sacoche) { line(ctx, 11, 18, 19, 27, '#16131a'); rect(ctx, 17, 26, 5, 4, '#16131a'); px(ctx, 19, 27, '#cfcfd6'); }
   if (ac.bumbag) { line(ctx, 10, 27, 21, 18, '#16131a'); rect(ctx, 13, 21, 6, 3, ac.bumbag); px(ctx, 15, 22, '#f4f4f4'); }
@@ -395,10 +381,9 @@ export const OWNERS = {
   oceania: { skin: '#e2b48a', hair: { style: 'mullet', color: '#7a4a24' }, head: { type: 'backcap', color: '#f4f4f4', accent: '#1d3f8f' }, top: { type: 'polo', color: '#1d3f8f', accent: '#f4f4f4', logo: '#2fa84f' }, legs: { type: 'shorts', color: '#16161c' }, shoes: { type: 'tn', color: '#f4c430', accent: '#111' }, socks: true, acc: { bumbag: '#16161c' } },
 };
 
-export const NUCCI = { skin: '#9a6a46', hair: { style: 'fade', color: '#120c0a' }, head: { type: 'fedora', color: '#2e2620', accent: '#0d0b10' }, eyes: { type: 'shades' }, top: { type: 'trench', color: '#9c7a4a' }, legs: { type: 'jeans', color: '#1d1d24' }, shoes: { type: 'sneaker', color: '#111', sole: '#2a2a2a' }, pose: { right: 'face' } };
-export function buildNucci() {
-  return { closed: frontFrame(NUCCI, { right: 'face' }), open: frontFrame(NUCCI, { right: 'face', coatOpen: true }), blink: frontFrame(NUCCI, { right: 'face' }) };
-}
+// The booster: hood up, face swallowed by shadow, gold grill flashing
+export const BOOSTER = { skin: '#0d0a10', shadowFace: true, hair: null, head: { type: 'hood', color: '#16131a' }, top: { type: 'hoodie', color: '#16131a', accent: '#f2c14e', logo: false }, legs: { type: 'cargo', color: '#22222a' }, shoes: { type: 'sneaker', color: '#f4f4f4' }, acc: { chain: true } };
+export const buildBooster = () => buildStander(BOOSTER);
 
 // ---------- Pedestrian wardrobe (wears real stock) ----------
 const SKINS = ['#f1c7a2', '#e0a978', '#c98d5e', '#a8714a', '#8a5634', '#6b3f26', '#4e2c1a', '#f6d8bd'];

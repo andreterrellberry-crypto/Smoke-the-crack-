@@ -1,8 +1,8 @@
 // The block at night: pre-rendered pixel layers + a light live layer (people, traffic, neon, steam).
 import { P, rng, pick, canvas, rect, px, line, wire, dither, speckle, brick, window_, glow, shade } from './draw.js';
 import { text, measure } from './font.js';
-import { FACADES, SW, ALLEY_W, construction, paintAlley, paintCorner, lampPost, lampPools, hydrant, trashCan, payphone, newsBox, pole, neonSign } from './facades.js';
-import { buildWalker, buildStander, buildNucci, pedestrianSpec, pigeonFrames, catFrames, carFrames, carType, FW, FH } from './sprites.js';
+import { FACADES, SW, ALLEY_W, construction, paintBoosterCorner, paintCorner, lampPost, lampPools, hydrant, trashCan, payphone, newsBox, pole, neonSign } from './facades.js';
+import { buildWalker, buildStander, buildBooster, pedestrianSpec, pigeonFrames, catFrames, carFrames, carType, FW, FH } from './sprites.js';
 
 export const MAIN_H = 268;
 export const G = 192; // sidewalk meets the buildings
@@ -19,7 +19,7 @@ export function buildLayout(stores) {
     segs.push({ kind: 'store', id: s.id, x, w: SW });
     x += SW;
     if (s.id === 'south-america') {
-      segs.push({ kind: 'alley', id: 'nucci', x, w: ALLEY_W });
+      segs.push({ kind: 'alley', id: 'booster', x, w: ALLEY_W });
       x += ALLEY_W;
     }
   }
@@ -27,7 +27,7 @@ export function buildLayout(stores) {
   return { segs, width: x + CORNER_W };
 }
 
-export function createStreet({ cv, stores, itemsByStore, openById, countById, pedItems, onStore, onNucci, onPedestrian, onHover }) {
+export function createStreet({ cv, stores, itemsByStore, openById, countById, pedItems, boosterItems, onStore, onBooster, onPedestrian, onHover }) {
   const { segs, width: W } = buildLayout(stores);
   const r = rng(77);
   const ctx = cv.getContext('2d');
@@ -61,7 +61,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
       const c = paintCorner(m, seg.x, G, r, seg.end);
       neon.push(...c.neon);
     } else if (seg.kind === 'alley') {
-      alleyInfo = paintAlley(m, seg.x, G, r);
+      alleyInfo = paintBoosterCorner(m, seg.x, G, r, boosterItems);
       neon.push(...alleyInfo.neon);
       fx.steam.push({ ...alleyInfo.steam, p: [] });
     } else {
@@ -148,7 +148,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     const spec = { ...pedestrianSpec(top, null, pick(r, shoes), r), acc: { phone: r() > 0.4, chain: r() > 0.5 } };
     loiter.push({ item: top, sp: buildStander(spec), x: seg.x + ox, y, t: r() * 5 });
   }
-  const nucci = buildNucci();
+  const booster = buildBooster();
   const pigeons = pigeonFrames();
   const cat = catFrames();
   const flocks = [segs[3].x + 60, segs.find((s) => s.id === 'asia').x + 30, W - 200].map((x) => ({ x, birds: [0, 7, 15].map((o) => ({ o, peck: 0 })), flying: 0 }));
@@ -166,15 +166,24 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     return c;
   };
   const tags = Object.fromEntries(stores.map((s) => [s.id, { n: tagCanvas(s, false), h: tagCanvas(s, true) }]));
-  const vipTag = neonSign('VIP ONLY', '#f2c14e', { font: 'small', bg: '#1a0f1e' });
-  const psst = (() => {
-    const line1 = 'AYE BRO, I GOT THAT', line2 = 'NEW SHI...';
-    const w = Math.max(measure(line1, 'small'), measure(line2, 'small')) + 10;
+  const boosterTag = (hover) => {
+    const label = hover ? "BOOSTER CORNER > TRUNK" : 'BOOSTER CORNER • RARE';
+    const w = measure(label, 'small') + 8;
+    const [c, x] = canvas(w, 11);
+    rect(x, 0, 0, w, 10, '#f2c14e'); rect(x, 1, 1, w - 2, 8, hover ? '#f2c14e' : '#0d0a10');
+    rect(x, 1, 10, w - 1, 1, '#00000088');
+    text(x, label, 4, 3, hover ? '#0d0a10' : '#f2c14e', { font: 'small' });
+    return c;
+  };
+  const bTags = { n: boosterTag(false), h: boosterTag(true) };
+  const bubble = (() => {
+    const line1 = "AIN'T NOBODY", line2 = 'GOT THESE.';
+    const w = Math.max(measure(line1, 'small'), measure(line2, 'small')) + 12;
     const [c, x] = canvas(w, 22);
     rect(x, 0, 0, w, 18, P.ink); rect(x, 1, 1, w - 2, 16, '#f4efe2');
-    rect(x, w - 22, 18, 4, 2, P.ink); rect(x, w - 21, 17, 2, 2, '#f4efe2'); px(x, w - 20, 20, P.ink);
+    rect(x, w - 14, 18, 4, 2, P.ink); rect(x, w - 13, 17, 2, 2, '#f4efe2'); px(x, w - 12, 20, P.ink);
     text(x, line1, w / 2, 3, P.ink, { font: 'small', align: 'center' });
-    text(x, line2, w / 2, 10, '#b3201f', { font: 'small', align: 'center' });
+    text(x, line2, w / 2, 10, '#b8861e', { font: 'small', align: 'center' });
     return c;
   })();
   const coneR = (() => {
@@ -242,7 +251,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     for (const l of loiter) if (Math.abs(x - l.x) < 8 && y > l.y - 44 && y < l.y + 2) return { ped: l };
     for (const seg of segs) {
       if (x < seg.x || x >= seg.x + seg.w || y > G + 4) continue;
-      if (seg.kind === 'alley') return { nucci: true };
+      if (seg.kind === 'alley') return { booster: true };
       if (seg.kind === 'store' && y > tops[seg.id] - 14) return { store: seg.id };
     }
     return null;
@@ -269,9 +278,9 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
       }
     } else if (e.target === cv) {
       const h = hitTest(e.clientX, e.clientY);
-      const key = h ? h.store || (h.nucci && 'nucci') || (h.ped && 'ped') : null;
+      const key = h ? h.store || (h.booster && 'booster') || (h.ped && 'ped') : null;
       cv.style.cursor = key ? 'pointer' : 'grab';
-      hover = h?.store || (h?.nucci ? 'nucci' : null);
+      hover = h?.store || (h?.booster ? 'booster' : null);
       onHover?.(h, e.clientX, e.clientY);
     }
   });
@@ -284,7 +293,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     const h = hitTest(e.clientX, e.clientY);
     if (!h) return;
     if (h.ped) { h.ped.pause = 4; onPedestrian(h.ped.item, e.clientX, e.clientY); }
-    else if (h.nucci) onNucci();
+    else if (h.booster) onBooster();
     else onStore(h.store);
   });
   cv.addEventListener('wheel', (e) => {
@@ -303,7 +312,6 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
   // ---------- frame ----------
   let t = 0;
   let entering = null;
-  let nucciOpen = false;
   const neonState = neon.map(() => ({ on: true, next: Math.random() * 6 }));
   function particles(src, dt, color, rate) {
     src.acc = (src.acc || 0) + dt * rate;
@@ -390,14 +398,17 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
       rect(ctx, d.x - cx, oy + d.y, d.w, d.h, '#ffd57a');
       dither(ctx, d.x - cx - 4, oy + d.y + d.h - 2, d.w + 8, 6, '#ffd57a');
     }
-    // cat on the dumpster + Nucci
+    // cat on the van roof + the booster by the open trunk
     if (alleyInfo) {
       ctx.drawImage(cat[Math.floor(t * 1.2) % 2], Math.round(alleyInfo.cat.x - cx), Math.round(oy + alleyInfo.cat.y));
-      const nf = nucciOpen ? nucci.open : Math.floor(t * 0.6) % 7 === 0 ? nucci.blink : nucci.closed;
-      ctx.drawImage(nf, Math.round(alleyInfo.nucci.x - FW / 2 - cx), Math.round(oy + alleyInfo.nucci.y - FH + 1));
-      const near = Math.abs(alleyInfo.nucci.x - (cx + viewW / 2)) < viewW * 0.35;
-      if ((near || hover === 'nucci') && !nucciOpen) ctx.drawImage(psst, Math.round(alleyInfo.nucci.x - psst.width + 18 - cx), Math.round(oy + alleyInfo.nucci.y - 70));
-      ctx.drawImage(vipTag, Math.round(alleyInfo.nucci.x - 10 - vipTag.width / 2 - cx), Math.round(oy + G - 164));
+      const b = alleyInfo.booster;
+      const near = Math.abs(b.x + 30 - (cx + viewW / 2)) < viewW * 0.35 || hover === 'booster';
+      const ph = t % 3;
+      const bf = near && ph > 0.4 && ph < 1.6 ? (Math.floor(t * 6) % 2 ? booster.talk : booster.idle) : t % 4.4 < 0.25 ? booster.blink : booster.idle;
+      ctx.drawImage(bf, Math.round(b.x - FW / 2 - cx), Math.round(oy + b.y - FH + 1));
+      if (near) ctx.drawImage(bubble, Math.round(b.x - bubble.width + 12 - cx), Math.round(oy + b.y - 70));
+      const tg = bTags[hover === 'booster' ? 'h' : 'n'];
+      ctx.drawImage(tg, Math.round(b.x + 36 - tg.width / 2 - cx), Math.round(oy + G - 166));
     }
     // loiterers + walkers, back to front
     const actors = [
@@ -435,9 +446,9 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     setActive(v) { active = v; if (!v) { hover = null; onHover?.(null, 0, 0); } },
     jumpToStore(id) { const s = segs.find((x) => x.id === id); camX = clampCam(centerOn(s.x + s.w / 2)); },
     walkToStore(id, panelPx = 0) { const s = segs.find((x) => x.id === id); return walkTo(centerOn(s.x + s.w / 2, panelPx)); },
-    walkToNucci(panelPx = 0) { const s = segs.find((x) => x.kind === 'alley'); return walkTo(centerOn(s.x + s.w / 2, panelPx)); },
+    walkToBooster() { const s = segs.find((x) => x.kind === 'alley'); return walkTo(centerOn(s.x + s.w / 2)); },
+    trunkScreen() { return { x: (alleyInfo.trunk.x - camX) * scale, y: (mainY + alleyInfo.trunk.y) * scale }; },
     setEntering(id) { entering = id; },
-    setNucciOpen(v) { nucciOpen = v; },
     doorScreen(id) { const d = doors[id]; return { x: (d.x + d.w / 2 - camX) * scale, y: (mainY + d.y + d.h / 2) * scale }; },
     render,
   };

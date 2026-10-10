@@ -1,5 +1,5 @@
 import {
-  ITEMS, ALL_ITEMS, VIP_ITEMS, NUCCI_PICKS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
+  ITEMS, ALL_ITEMS, BOOSTER_ITEMS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
   itemsForScope, COUNT_BY_COUNTRY, COUNT_BY_STORE, storeOfItem, isOpen,
 } from '../data/inventory.js';
 import { itemImg } from '../pix/items.js';
@@ -24,7 +24,7 @@ const store = {
   },
 };
 
-export function createMarket({ onGoStore, onGoNucci, onClose }) {
+export function createMarket({ onGoStore, onGoBooster, onClose }) {
   const panel = $('#market');
   const grid = $('#grid');
   const crumbs = $('#crumbs');
@@ -62,11 +62,11 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
 
   function card(it, opts = {}) {
     const inBag = cart.includes(it.id);
-    const loc = it.vip ? null : LOC_BY_ID[it.locId];
-    const where = it.vip ? it.origin : `${loc.city}, ${loc.country}`;
-    const st = it.vip ? null : storeOfItem(it);
-    return `<article class="card${it.vip ? ' vip-card' : ''}">
-      <div class="art">${itemImg(it)}<span class="cond">${esc(it.condition)}</span>${it.vip ? '<span class="badge">VIP ONLY</span>' : opts.pick ? '<span class="badge pick">NUCCI’S PICK</span>' : ''}</div>
+    const loc = it.booster ? null : LOC_BY_ID[it.locId];
+    const where = it.booster ? it.origin : `${loc.city}, ${loc.country}`;
+    const st = it.booster ? null : storeOfItem(it);
+    return `<article class="card">
+      <div class="art">${itemImg(it)}<span class="cond">${esc(it.condition)}</span>${it.booster ? `<span class="badge">${esc(it.rarity.toUpperCase())}</span>` : ''}</div>
       <div class="body">
         <div class="row"><span class="brand">${esc(it.brand)}</span><span class="price">${money(it.price)}</span></div>
         <h3>${esc(it.name)}</h3>
@@ -74,7 +74,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
         <p class="facts"><b>${it.year}</b> · ${esc(it.collection)} · by ${esc(it.designer)}</p>
         <p class="blurb">${esc(it.blurb)}</p>
         <div class="row foot"><span class="size">Size ${esc(it.size)}</span>${opts.showStore && st ? `<button class="goto" data-store="${st.id}">At ${esc(st.name)} ›</button>` : ''}</div>
-        <button class="add${inBag ? ' in' : ''}" data-id="${it.id}">${inBag ? 'In Bag ✓' : it.vip ? 'Request Hold' : 'Add to Bag'}</button>
+        <button class="add${inBag ? ' in' : ''}" data-id="${it.id}">${inBag ? 'In Bag ✓' : it.booster ? 'Cop it' : 'Add to Bag'}</button>
       </div>
     </article>`;
   }
@@ -85,19 +85,15 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
   }
 
   function render() {
-    panel.classList.toggle('vip', scope.level === 'nucci');
-    sortSel.hidden = scope.level === 'nucci';
+    panel.classList.toggle('booster', scope.level === 'booster');
     chipsHost.innerHTML = '';
 
-    if (scope.level === 'nucci') {
-      crumbs.innerHTML = `<span class="crumb on">Nucci’s Corner</span>`;
-      title.textContent = 'Nucci’s Corner';
-      meta.textContent = `Members only · ${VIP_ITEMS.length} off-menu pieces · ${NUCCI_PICKS.length} picks from the block`;
-      grid.innerHTML =
-        `<p class="section-h">Off the menu. You won’t find these anywhere else on the block.</p>` +
-        VIP_ITEMS.map((it) => card(it)).join('') +
-        `<p class="section-h">Nucci’s picks from the block</p>` +
-        NUCCI_PICKS.map((it) => card(it, { pick: true, showStore: true })).join('');
+    if (scope.level === 'booster') {
+      const prices = BOOSTER_ITEMS.map((i) => i.price);
+      crumbs.innerHTML = `<span class="crumb on">Booster Corner</span><span class="sep">›</span><span class="crumb">Back of the van</span>`;
+      title.textContent = 'Booster Corner';
+      meta.textContent = `${BOOSTER_ITEMS.length} rare pieces · ${money(Math.min(...prices))} to ${money(Math.max(...prices))} · when they’re gone, they’re gone`;
+      grid.innerHTML = `<p class="section-h">“Ain’t nobody got these.”</p>` + sortItems(BOOSTER_ITEMS).map((it) => card(it)).join('');
       wireGrid();
       grid.scrollTop = 0;
       return;
@@ -156,7 +152,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
       showToast(`Removed ${it.name}`);
     } else {
       cart.push(id);
-      showToast(it.vip ? `Nucci’s holding the ${it.name} for you.` : `Added ${it.brand} — ${it.name}`);
+      showToast(it.booster ? `Out the trunk and in your bag: ${it.name}.` : `Added ${it.brand} — ${it.name}`);
       bagBtn.classList.remove('bump');
       void bagBtn.offsetWidth;
       bagBtn.classList.add('bump');
@@ -177,7 +173,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
     bagList.innerHTML = items.length
       ? items
           .map((it) => {
-            const where = it.vip ? `Nucci’s Corner · VIP hold` : `${LOC_BY_ID[it.locId].city}, ${LOC_BY_ID[it.locId].country}`;
+            const where = it.booster ? `Booster Corner · back of the van` : `${LOC_BY_ID[it.locId].city}, ${LOC_BY_ID[it.locId].country}`;
             return `<li><div class="mini">${itemImg(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(where)} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`;
           })
           .join('')
@@ -199,7 +195,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
     for (const st of STORES)
       if (!q || `${st.name} ${st.region} ${st.owner}`.toLowerCase().includes(q))
         add(st.id, { store: st.id, label: st.name, sub: `${st.region} · ${isOpen(st) ? `${COUNT_BY_STORE[st.id]} pieces` : 'Under construction'}` });
-    if (!q || 'nucci vip exclusive corner'.includes(q) || q.includes('nucci')) add('nucci', { nucci: true, label: 'Nucci’s Corner', sub: 'VIP · off-menu pieces' });
+    if (!q || 'booster corner van trunk rare'.includes(q) || q.includes('booster') || q.includes('rare')) add('booster', { booster: true, label: 'Booster Corner', sub: `Back of the van · ${BOOSTER_ITEMS.length} rare pieces` });
     if (q) {
       for (const c of Object.keys(STORE_BY_COUNTRY))
         if (c.toLowerCase().includes(q)) add(`c-${c}`, { store: STORE_BY_COUNTRY[c].id, country: COUNT_BY_COUNTRY[c] ? c : null, label: c, sub: `${STORE_BY_COUNTRY[c].name} · ${COUNT_BY_COUNTRY[c] || 0} pieces` });
@@ -219,7 +215,7 @@ export function createMarket({ onGoStore, onGoNucci, onClose }) {
           const r = out[+b.dataset.i];
           results.classList.remove('show');
           search.blur();
-          r.nucci ? onGoNucci() : onGoStore(r.store, r.country);
+          r.booster ? onGoBooster() : onGoStore(r.store, r.country);
         })
     );
   }

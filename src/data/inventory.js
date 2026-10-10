@@ -204,18 +204,25 @@ export const COUNT_BY_STORE = Object.fromEntries(STORES.map((s) => [s.id, itemsF
 // No stock → the storefront is boarded up and can't be entered
 export const isOpen = (store) => COUNT_BY_STORE[store.id] > 0;
 
-// ---------- Nucci's Corner: VIP-only pieces + his picks from the rest of the block ----------
-const VIP_RAW = [
-  ['Cemetery Cross Leather Jacket', 'Chrome Hearts', 'jacket', 16500, 'L', 'Private Order', 2008, 'Made to order', 'Richard Stark', 'Hollywood, USA', 'Sterling cross hardware on buttery cowhide. Never hit a shop floor.', '#141414', '#d9d9d9'],
-  ['Air Jordan 1 High “Bred”', 'Nike', 'sneaker', 14200, 'US 10.5', 'Deadstock in box', 1985, 'Original Release', 'Peter Moore', 'Beaverton, USA', 'Original box, original paper. Nucci won’t say where he found them.', '#111111', '#c8102e'],
-  ['Gold Camo Shark Hoodie (Sample)', 'A Bathing Ape', 'hoodie', 6800, 'L', 'Sample – Unworn', 2006, 'Showroom sample', 'Nigo', 'Tokyo, Japan', 'Showroom sample that never went to production.', '#b8912f', '#111111'],
-  ['One-of-One Boro Kimono Coat', 'Kapital', 'coat', 5400, 'OS', 'New', 2019, 'Atelier piece', 'Kazuhiro Hiraki', 'Kojima, Japan', 'Hand-patched from century-old indigo scraps. Only one exists.', '#1f3a5f', '#e9dfc9'],
-  ['Pirate Boots', 'Vivienne Westwood', 'sneaker', 4900, 'UK 9', 'Archive – Excellent', 1981, '“Pirate” collection', 'Vivienne Westwood & Malcolm McLaren', 'London, UK', 'From the collection that launched a movement on the King’s Road.', '#5a3a1e', '#d4af37'],
-  ['Hand-Painted Gull Denim Jacket', 'Evisu', 'jacket', 3900, 'M', 'Vintage – Excellent', 1995, 'Early Osaka run', 'Hidehiko Yamane', 'Osaka, Japan', 'Hand-painted gulls on the back. Early Osaka-era piece.', '#203550', '#ffffff'],
+// ---------- Booster Corner: rare pieces out the back of a van. Cheap finds and five-figure grails. ----------
+// [name, brand, type, price, size, condition, year, collection, designer, origin, blurb, primary, accent, rarity]
+const BOOSTER_RAW = [
+  ['Cemetery Cross Leather Jacket', 'Chrome Hearts', 'jacket', 16500, 'L', 'Private Order', 2008, 'Made to order', 'Richard Stark', 'Hollywood, USA', 'Sterling cross hardware on buttery cowhide. Never hit a shop floor.', '#141414', '#d9d9d9', '1 of 1'],
+  ['Air Jordan 1 High “Bred”', 'Nike', 'sneaker', 14200, 'US 10.5', 'Deadstock in box', 1985, 'Original Release', 'Peter Moore', 'Beaverton, USA', 'Original box, original paper. Don’t ask where they came from.', '#111111', '#c8102e', 'OG box'],
+  ['Gold Camo Shark Hoodie (Sample)', 'A Bathing Ape', 'hoodie', 6800, 'L', 'Sample – Unworn', 2006, 'Showroom sample', 'Nigo', 'Tokyo, Japan', 'Showroom sample that never went to production.', '#b8912f', '#111111', 'Sample'],
+  ['One-of-One Boro Kimono Coat', 'Kapital', 'coat', 5400, 'OS', 'New', 2019, 'Atelier piece', 'Kazuhiro Hiraki', 'Kojima, Japan', 'Hand-patched from century-old indigo scraps. Only one exists.', '#1f3a5f', '#e9dfc9', '1 of 1'],
+  ['Pirate Boots', 'Vivienne Westwood', 'sneaker', 4900, 'UK 9', 'Archive – Excellent', 1981, '“Pirate” collection', 'Vivienne Westwood & Malcolm McLaren', 'London, UK', 'From the collection that launched a movement on the King’s Road.', '#5a3a1e', '#d4af37', 'Archive'],
+  ['Hand-Painted Gull Denim Jacket', 'Evisu', 'jacket', 3900, 'M', 'Vintage – Excellent', 1995, 'Early Osaka run', 'Hidehiko Yamane', 'Osaka, Japan', 'Gulls painted by hand on the back. Early Osaka-era piece.', '#203550', '#ffffff', 'Hand-painted'],
+  ['Mismatched Sample Pair', 'Nike', 'sneaker', 120, 'US 9', 'Sample – Worn once', 2009, 'Factory sample', 'Unknown', 'Guangdong, China', 'Left and right in different colourways. Came out the back of a factory.', '#f4f4f4', '#2a5ea8', 'Sample'],
+  ['Pirate Radio Promo Hoodie', 'Unknown', 'hoodie', 60, 'XL', 'Vintage – Good', 1994, 'Station promo', 'Station crew', 'London, UK', 'Made for one jungle station’s crew. Only about 50 printed.', '#1a1a1a', '#f4c430', '1 of 50'],
+  ['Olympic Volunteer Staff Tee', 'Vintage', 'tee', 45, 'L', 'Vintage – Good', 1996, 'Staff issue', 'Unknown', 'Atlanta, USA', 'Staff-only issue, never sold to the public.', '#f2f2f2', '#0a3d91', 'Staff only'],
+  ['Single-Stitch Bootleg Rap Tee', 'Bootleg', 'tee', 38, 'XL', 'Vintage – Faded', 1993, 'Flea market', 'Unknown', 'Brooklyn, USA', 'Off-register print, single-stitch hem. Every one came out different.', '#2a2a2a', '#c8102e', 'Bootleg'],
+  ['Canal Street Monogram Bucket Hat', 'Bootleg', 'cap', 25, 'OS', 'Used – Good', 2002, 'Canal Street', 'Unknown', 'New York City, USA', 'An original Canal Street bootleg. Now rarer than the real thing.', '#7a5a2e', '#e8c86a', 'Bootleg'],
+  ['Konbini Collab Tee', 'Unknown', 'tee', 30, 'M', 'New w/ Tags', 2008, 'Japan-only', 'Unknown', 'Tokyo, Japan', 'Sold at one convenience-store chain for a week, then gone.', '#f4f4f4', '#2fa84f', 'Japan only'],
 ];
-export const VIP_ITEMS = VIP_RAW.map((r, i) => ({
-  id: `vip-${i}`,
-  vip: true,
+export const BOOSTER_ITEMS = BOOSTER_RAW.map((r, i) => ({
+  id: `boost-${i}`,
+  booster: true,
   name: r[0],
   brand: r[1],
   type: r[2],
@@ -229,7 +236,6 @@ export const VIP_ITEMS = VIP_RAW.map((r, i) => ({
   blurb: r[10],
   color: r[11],
   accent: r[12],
+  rarity: r[13],
 }));
-const PICK_NAMES = ['“Riot Riot Riot” Bomber', '“Scab” Patchwork Jacket', 'Ice Jacket', 'Velvet Tuxedo Blazer', 'Air Jordan 1 High “Chicago”'];
-export const NUCCI_PICKS = PICK_NAMES.map((n) => ITEMS.find((i) => i.name === n)).filter(Boolean);
-export const ALL_ITEMS = [...ITEMS, ...VIP_ITEMS];
+export const ALL_ITEMS = [...ITEMS, ...BOOSTER_ITEMS];

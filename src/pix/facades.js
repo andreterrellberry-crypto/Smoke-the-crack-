@@ -6,7 +6,7 @@ import { itemSprite } from './items.js';
 import { catFrames } from './sprites.js';
 
 export const SW = 160; // store width
-export const ALLEY_W = 76;
+export const ALLEY_W = 100;
 
 // ---------- reusable pieces ----------
 export function neonSign(str, color, o = {}) {
@@ -349,33 +349,97 @@ export function construction(ctx, x, G, f, store, r) {
   for (const cx of [x + 30, x + 132]) { rect(ctx, cx, G - 10, 8, 10, '#ff7a1a'); rect(ctx, cx + 2, G - 14, 4, 4, '#ff7a1a'); rect(ctx, cx + 1, G - 7, 6, 2, '#f4f4f4'); rect(ctx, cx - 2, G - 1, 12, 1, '#c85a10'); }
 }
 
-// ---------- Nucci's Corner ----------
-export function paintAlley(ctx, x, G, r) {
+// ---------- Booster Corner: a van backed into the alley, rear doors open, trunk full of rare pieces ----------
+// Van rear in local space: body from bx..bx+bw, roof at top, bumper at bottom. Shared by the street and the close-up.
+export function vanRear(ctx, bx, top, bw, bh, r, items, o = {}) {
+  const body = '#d6d2dc', bodyDk = '#aaa6b4', bottom = top + bh;
+  const doorW = Math.round(bw * 0.16);
+  // open rear doors swung outward
+  for (const [dx, dir] of [[bx - doorW, -1], [bx + bw, 1]]) {
+    for (let j = 0; j < bh - 6; j++) {
+      const skew = Math.round((j / bh) * 2) * dir;
+      rect(ctx, dx + skew, top + 3 + j, doorW, 1, j < (bh - 6) * 0.42 ? '#5a6a7a' : bodyDk);
+    }
+    rect(ctx, dx + (dir < 0 ? 0 : doorW - 1), top + 3, 1, bh - 6, '#7a7686');
+    if (o.big) rect(ctx, dx + 2, top + Math.round(bh * 0.5), doorW - 4, 2, '#5d5966');
+  }
+  // body shell
+  rect(ctx, bx, top, bw, bh, body);
+  rect(ctx, bx + 1, top, bw - 2, 1, '#eeeaf4');
+  speckle(ctx, bx, top, bw, bh, ['#bcb8c6', '#9a96a4', '#8a5a3a'], o.big ? 0.05 : 0.08, r);
+  // trunk interior
+  const ix = bx + Math.max(3, Math.round(bw * 0.06)), iy = top + Math.max(3, Math.round(bh * 0.07));
+  const iw = bw - (ix - bx) * 2, ih = Math.round(bh * 0.72);
+  rect(ctx, ix, iy, iw, ih, '#1c141c');
+  for (let x = ix + 3; x < ix + iw; x += o.big ? 6 : 4) rect(ctx, x, iy, 1, ih, '#251a26');
+  glow(ctx, bx + bw / 2, iy + 2, Math.round(iw * 0.45), Math.round(ih * 0.55), '#ffe9a01c');
+  rect(ctx, bx + bw / 2 - (o.big ? 6 : 3), iy, o.big ? 12 : 6, o.big ? 2 : 1, '#fff3b0');
+  // rail of hanging pieces
+  const rail = iy + (o.big ? 6 : 3);
+  rect(ctx, ix + 2, rail, iw - 4, 1, '#8a8a92');
+  const hang = items.slice(0, o.big ? 4 : 2);
+  const step = (iw - 4) / hang.length;
+  hang.forEach((it, i) => {
+    const sx = Math.round(ix + 2 + step * i + step / 2 - 12);
+    if (o.big) { line(ctx, sx + 12, rail, sx + 12, rail + 2, '#c9c6cf'); ctx.drawImage(itemSprite(it), sx, rail + 1); }
+    else { ctx.drawImage(itemSprite(it), sx + 2, rail + 1, 20, 20); }
+  });
+  // floor of the trunk: shoeboxes, gold chains, a watch box
+  const fl = iy + ih;
+  rect(ctx, ix, fl - 1, iw, 1, '#3a2a30');
+  const box = (x, w, h, c) => { rect(ctx, x, fl - h, w, h, c); rect(ctx, x, fl - h, w, 1, shade(c, 0.2)); rect(ctx, x + 1, fl - h + 2, w - 2, 1, '#f4f4f4'); };
+  if (o.big) {
+    box(ix + 4, 16, 9, '#e04f2f'); box(ix + 6, 14, 7, '#f4f4f4'); box(ix + 22, 16, 10, '#1a1a1a'); box(ix + iw - 26, 18, 9, '#f29a2e');
+    const sneaker = items.find((i) => i.type === 'sneaker');
+    if (sneaker) ctx.drawImage(itemSprite(sneaker), ix + 38, fl - 24);
+    for (let k = 0; k < 4; k++) for (let i = 0; i < 9; i++) px(ctx, ix + iw - 46 + i + (k % 2), fl - 3 - k - Math.round(Math.sin(i / 1.4) * 1.5), k % 2 ? '#c8922a' : '#f2c14e');
+    rect(ctx, ix + iw - 34, fl - 8, 8, 6, '#3a2418'); rect(ctx, ix + iw - 33, fl - 7, 6, 3, '#f2c14e'); px(ctx, ix + iw - 30, fl - 6, '#ffffff');
+  } else {
+    box(ix + 2, 8, 5, '#e04f2f'); box(ix + 11, 8, 6, '#1a1a1a'); box(ix + iw - 10, 8, 5, '#f29a2e');
+    for (let i = 0; i < 6; i++) px(ctx, ix + iw - 18 + i, fl - 2 - (i % 2), '#f2c14e');
+  }
+  // tail lights, bumper, plate, wheels
+  const tl = o.big ? 4 : 2;
+  for (const tx of [bx, bx + bw - tl]) { rect(ctx, tx, top + Math.round(bh * 0.3), tl, Math.round(bh * 0.3), '#e0302a'); rect(ctx, tx, top + Math.round(bh * 0.3), tl, 1, '#ff8a80'); glow(ctx, tx + tl / 2, top + Math.round(bh * 0.45), tl * 3, Math.round(bh * 0.2), '#ff302a22'); }
+  const bumpH = o.big ? 7 : 4;
+  rect(ctx, bx - 1, bottom - bumpH, bw + 2, bumpH, '#2a2830'); rect(ctx, bx - 1, bottom - bumpH, bw + 2, 1, '#4a4652');
+  if (o.big) {
+    rect(ctx, bx + bw / 2 - 18, bottom - bumpH - 9, 36, 11, '#f4f4f4'); rect(ctx, bx + bw / 2 - 18, bottom - bumpH - 9, 36, 2, '#2a5ea8');
+    text(ctx, 'BOOST', bx + bw / 2, bottom - bumpH - 6, '#1a1a1a', { align: 'center' });
+  } else {
+    rect(ctx, bx + bw / 2 - 10, bottom - bumpH - 6, 20, 7, '#f4f4f4');
+    text(ctx, 'BOOST', bx + bw / 2, bottom - bumpH - 5, '#1a1a1a', { align: 'center', font: 'small' });
+  }
+  const wh = o.big ? 10 : 6;
+  for (const wx of [bx + 4, bx + bw - 4 - wh * 1.4]) rect(ctx, wx, bottom, Math.round(wh * 1.4), wh, '#111015');
+  tag(ctx, bx + 4, top + bh - (o.big ? 30 : 16), Math.min(26, bw - 10), r, P.neonPink);
+  return { trunk: { x: bx + bw / 2, y: iy + ih / 2 } };
+}
+
+export function paintBoosterCorner(ctx, x, G, r, items) {
   const W = ALLEY_W;
   brick(ctx, x, G - 150, W, 150, ['#3a2a34', '#342630', '#40303a', '#2e222a'], '#1e161c', r, 6, 3);
   dither(ctx, x, G - 150, W, 150, '#0a060e');
-  // side walls in perspective
   for (let j = 0; j < 150; j++) { const w = Math.max(0, 10 - Math.floor(j / 15)); rect(ctx, x, G - 150 + j, w, 1, '#120c14'); rect(ctx, x + W - w, G - 150 + j, w, 1, '#120c14'); }
-  // chain-link fence + razor wire at the back
-  for (let i = 0; i < W - 20; i += 3) { line(ctx, x + 10 + i, G - 60, x + 13 + i, G - 30, '#5d5b68'); line(ctx, x + 13 + i, G - 60, x + 10 + i, G - 30, '#5d5b68'); }
-  for (let i = 0; i < W - 20; i += 4) { px(ctx, x + 10 + i, G - 63, '#9d9ba8'); px(ctx, x + 12 + i, G - 62, '#9d9ba8'); }
-  // graffiti
-  text(ctx, "NUCCI'S", x + W / 2, G - 118, '#b45cff', { align: 'center', outline: '#120c14' });
-  text(ctx, 'CORNER', x + W / 2, G - 108, '#f2c14e', { align: 'center', outline: '#120c14' });
-  for (const [dx, len] of [[-14, 5], [-2, 8], [10, 4], [18, 6]]) rect(ctx, x + W / 2 + dx, G - 110, 1, len, '#b45cff');
-  // bulb + light cone
-  rect(ctx, x + W / 2, G - 150, 1, 54, '#1a1a1a'); rect(ctx, x + W / 2 - 1, G - 96, 3, 3, '#ffe9a0');
-  glow(ctx, x + W / 2, G - 40, 30, 50, '#ffe9a022');
-  // ground, puddle, dumpster, bags
+  for (let i = 0; i < W - 20; i += 3) { line(ctx, x + 10 + i, G - 76, x + 13 + i, G - 50, '#5d5b68'); line(ctx, x + 13 + i, G - 76, x + 10 + i, G - 50, '#5d5b68'); }
+  for (let i = 0; i < W - 20; i += 4) { px(ctx, x + 10 + i, G - 79, '#9d9ba8'); px(ctx, x + 12 + i, G - 78, '#9d9ba8'); }
+  text(ctx, 'BOOSTER', x + W / 2, G - 128, '#b45cff', { align: 'center', outline: '#120c14' });
+  text(ctx, 'CORNER', x + W / 2, G - 118, '#f2c14e', { align: 'center', outline: '#120c14' });
+  for (const [dx, len] of [[-18, 5], [-4, 8], [10, 4], [20, 6]]) rect(ctx, x + W / 2 + dx, G - 120, 1, len, '#b45cff');
+  text(ctx, '$', x + W - 18, G - 100, '#f2c14e', { scale: 2, outline: '#120c14' });
+  rect(ctx, x + W / 2, G - 150, 1, 46, '#1a1a1a'); rect(ctx, x + W / 2 - 1, G - 104, 3, 3, '#ffe9a0');
+  glow(ctx, x + W / 2, G - 50, 34, 52, '#ffe9a01c');
   rect(ctx, x, G - 6, W, 6, '#1e1a22'); dither(ctx, x, G - 6, W, 6, '#2a2630');
-  rect(ctx, x + 40, G - 3, 22, 2, '#5a3a7a'); px(ctx, x + 46, G - 3, P.neonPink);
-  rect(ctx, x + 4, G - 22, 28, 20, '#2e6b4a'); rect(ctx, x + 2, G - 25, 32, 3, '#245a3d'); for (let i = 0; i < 28; i += 6) rect(ctx, x + 4 + i, G - 20, 1, 16, '#1d4a32');
-  rect(ctx, x + 6, G - 2, 3, 2, '#1a1a1a'); rect(ctx, x + 27, G - 2, 3, 2, '#1a1a1a');
-  trashBags(ctx, x + 34, G, 3, r);
-  // velvet rope + brass posts
-  for (const sx of [x + 2, x + W - 4]) { rect(ctx, sx, G - 14, 2, 14, '#c9a34a'); rect(ctx, sx - 1, G - 16, 4, 2, '#e8c14a'); }
-  wire(ctx, x + 3, G - 13, x + W - 3, G - 13, 5, '#8e1d3a'); wire(ctx, x + 3, G - 12, x + W - 3, G - 12, 5, '#b02a50');
-  return { neon: [{ x: x - 30, y: G - 150, c: neonSign("NUCCI'S >", P.neonPink, { bg: '#120c14' }) }], steam: { x: x + 62, y: G - 4 }, cat: { x: x + 10, y: G - 34 }, nucci: { x: x + W / 2 + 10, y: G } };
+  trashBags(ctx, x + 4, G, 2, r);
+  const van = vanRear(ctx, x + 30, G - 62, 58, 54, r, items);
+  rect(ctx, x + 26, G - 8, 66, 2, '#0a080c');
+  return {
+    neon: [{ x: x - 30, y: G - 150, c: neonSign('BOOSTER >', P.neonPink, { bg: '#120c14' }) }],
+    steam: { x: x + 8, y: G - 4 },
+    cat: { x: x + 50, y: G - 71 },
+    booster: { x: x + 14, y: G + 7 },
+    trunk: van.trunk,
+  };
 }
 
 // ---------- Corner buildings + street furniture ----------

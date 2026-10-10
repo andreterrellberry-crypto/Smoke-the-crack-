@@ -59,7 +59,13 @@ export function buildAerial(segs, width, stores, openById = {}) {
   for (const seg of segs) {
     const x = ox + seg.x;
     if (seg.kind === 'store') (openById[seg.id] === false ? ROOFS.construction : ROOFS[seg.id])(ctx, x, ROW, seg.w, DEPTH, r);
-    else if (seg.kind === 'alley') { rect(ctx, x, ROW, seg.w, DEPTH, '#16121a'); rect(ctx, x + 6, ROW + 56, 22, 14, '#2e6b4a'); circle(ctx, x + seg.w / 2 + 10, ROW + 80, 4, '#2e2620', '#1a1410'); }
+    else if (seg.kind === 'alley') {
+      // the booster's van backed in, nose first, rear doors open to the street
+      rect(ctx, x, ROW, seg.w, DEPTH, '#16121a');
+      rect(ctx, x + 30, ROW + 20, 58, 66, '#d6d2dc'); rect(ctx, x + 32, ROW + 24, 54, 2, '#aaa6b4'); for (let k = 0; k < 4; k++) rect(ctx, x + 36 + k * 13, ROW + 30, 2, 40, '#aaa6b4');
+      rect(ctx, x + 22, ROW + 82, 10, 4, '#aaa6b4'); rect(ctx, x + 86, ROW + 82, 10, 4, '#aaa6b4');
+      circle(ctx, x + 14, ROW + 86, 4, '#16131a', '#0d0a10'); px(ctx, x + 14, ROW + 87, '#f2c14e');
+    }
     else { tarRoof(ctx, x, ROW, seg.w, DEPTH, r); if (!seg.end) { rect(ctx, x + 6, ROW + 6, seg.w - 12, 8, '#f4efe2'); } }
   }
   // sidewalks + road
@@ -72,7 +78,7 @@ export function buildAerial(segs, width, stores, openById = {}) {
   // labels
   for (const seg of segs) {
     if (seg.kind === 'corner') continue;
-    const label = seg.kind === 'alley' ? "NUCCI'S" : stores[seg.id].region.toUpperCase();
+    const label = seg.kind === 'alley' ? 'BOOSTER' : stores[seg.id].region.toUpperCase();
     const w = measure(label, 'small') + 8;
     const lx = ox + seg.x + seg.w / 2 - w / 2, ly = ROW + DEPTH / 2 - 5;
     rect(ctx, lx, ly, w, 11, P.ink); rect(ctx, lx + 1, ly + 1, w - 2, 9, seg.kind === 'alley' ? '#1a0f1e' : openById[seg.id] === false ? '#f6c42b' : '#f4efe2');
