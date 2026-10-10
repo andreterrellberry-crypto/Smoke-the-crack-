@@ -93,11 +93,12 @@ export function buildAerial(segs, width, stores, openById, R) {
   for (const seg of segs) {
     if (seg.kind === 'cross') continue;
     const label = seg.kind === 'alley' ? 'BOOSTER' : stores[seg.id].region.toUpperCase();
-    const w = measure(label, 8, FONT.block) + 12;
+    const w = measure(label, 8, FONT.slab) + 14;
     const lx = ox + seg.x + seg.w / 2 - w / 2, ly = ROW + DEPTH / 2 - 7;
-    rrect(ctx, lx + 1.8, ly + 1.8, w, 14, 7, K, 0);
-    rrect(ctx, lx, ly, w, 14, 7, seg.kind === 'alley' ? '#2a2f6b' : openById[seg.id] === false ? C.orange : '#ffffff', LW);
-    text(ctx, label, lx + w / 2, ly + 7.6, { size: 8, font: FONT.block, fill: seg.kind === 'alley' ? C.gold : K });
+    const bg = seg.kind === 'alley' ? '#2a2f6b' : openById[seg.id] === false ? C.orange : '#ffffff', fg = seg.kind === 'alley' ? C.gold : K;
+    rect(ctx, lx, ly, w, 14, bg, 1.2);
+    ctx.lineWidth = 0.5; ctx.strokeStyle = fg; ctx.strokeRect(lx + 1.6, ly + 1.6, w - 3.2, 10.8);
+    text(ctx, label, lx + w / 2, ly + 7.6, { size: 8, font: FONT.slab, fill: fg });
   }
   return { c, ox, streetY: sw + 8 };
 }

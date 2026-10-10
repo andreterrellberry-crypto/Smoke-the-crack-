@@ -228,7 +228,14 @@ function renderRoom(dt) {
   rctx.setTransform(RR, 0, 0, RR, 0, 0);
   rctx.drawImage(room.bg, 0, 0, room.w, room.h);
   const o = room.actor;
-  const fr = t < 1.8 ? (Math.floor(t * 4) % 2 ? o.wave : o.talk) : t < 3.6 ? (Math.floor(t * 7) % 2 ? o.talk : o.idle) : t % 4.2 < 0.18 ? o.blink : t % 9 > 6.5 && t % 9 < 7.6 ? o.look : o.idle;
+  // held frames, 12 a second: the owner snaps between poses like a cartoon
+  const tk = Math.floor(t * 12), beat = Math.floor(tk / 4), loop = (t - 4.6) % 10;
+  const fr = t < 1.8 ? (beat % 2 ? o.wave : o.talk)
+    : t < 4.6 ? [o.talk, o.point, o.talk2, o.talk, o.thumb, o.talk][beat % 6]
+    : loop > 7 && loop < 8.6 ? [o.talk, o.talk2, o.point, o.talk][beat % 4]
+    : loop > 8.6 && loop < 8.85 ? o.hop
+    : loop > 4 && loop < 5 ? o.look
+    : loop % 3.1 < 0.15 ? o.blink : beat % 2 ? o.bob : o.idle;
   room.draw(fr);
 }
 // Scale the scene to cover the screen and keep its subject centred in whatever space the panel leaves

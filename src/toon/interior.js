@@ -2,7 +2,8 @@
 // real stock on the racks, a gag sign or two on the wall.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, clip, rng, pick, shade } from './toon.js';
 import { itemCanvas } from './items.js';
-import { buildStander, OWNERS, BOOSTER, FRAME, catFrames } from './chars.js';
+import { buildStander, OWNERS, BOOSTER, FRAME } from './chars.js';
+import { catFrames } from './critters.js';
 import { neon, vanRear, tag } from './facades.js';
 
 export const RW = 300;
@@ -204,12 +205,12 @@ export function buildCounter(store, color, R) {
   oval(ctx, 150, COUNTER_Y - 6.6, 1, 0.8, C.gold, 0.5);
   line(ctx, [[164, COUNTER_Y], [164, COUNTER_Y - 12]], 0.7);
   for (let k = 0; k < 3; k++) rect(ctx, 160.6, COUNTER_Y - 3 - k * 2.6, 7, 2, '#ffffff', 0.4);
-  if (store.id === 'north-america') ctx.drawImage(catFrames(R)[1], 126, COUNTER_Y - 13.6, 18, 14);
+  if (store.id === 'north-america') ctx.drawImage(catFrames(R)[1], 124, COUNTER_Y - 15.4, 20, 16);
   return c;
 }
 
 export function buildOwner(storeId, R) {
-  return buildStander({ ...OWNERS[storeId] }, Math.ceil(R * OS));
+  return buildStander({ ...OWNERS[storeId] }, Math.min(6, Math.ceil(R * OS)));
 }
 export function drawOwner(ctx, fr) {
   ctx.drawImage(fr, OWNER_X - FRAME.ox * OS, OWNER_FEET - FRAME.oy * OS, FRAME.w * OS, FRAME.h * OS);
@@ -237,7 +238,7 @@ export function buildTrunkScene(items, R) {
   return c;
 }
 export function buildTrunkActor(R) {
-  return buildStander(BOOSTER, Math.ceil(R * 1.7));
+  return buildStander(BOOSTER, Math.min(7, Math.ceil(R * 1.7)));
 }
 // The booster leans into frame at 1.7x: head + chest of his figure
 export function drawBoosterBust(ctx, fr) {

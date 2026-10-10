@@ -1,6 +1,6 @@
 # Smoke the Crack — Global Resell Block
 
-Vintage grails sold on one block in the hood, drawn like a Saturday-morning cartoon show: flat saturated colour, clean even black outlines, googly-eyed big-nosed characters with buck teeth and giant shoes, and streets that recede in one-point perspective. The site opens looking straight down at the block, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
+Vintage grails sold on one block in the hood, drawn like a Saturday-morning cartoon show: flat saturated colour, thick black contour lines, detailed googly-eyed characters (shadowed eyelids, eye bags, bulb noses with nostrils, rows of teeth, four-finger hands, creased clothes, laced shoes) animated on held frames for that jumpy, bouncy cartoon timing, signage-style UI, and streets that recede in one-point perspective. The site opens looking straight down at the block, sweeps along the rooftops, then drops you onto the sidewalk. Every storefront reps a real neighbourhood on its continent, with an owner dressed for those streets. Walk up, step through the door, and shop their racks.
 
 ## Run
 
@@ -36,7 +36,8 @@ No images to download and no 3D engine: every building, person, car and garment 
 | --- | --- |
 | Stores, owners, inventory, booster stock | `src/data/inventory.js` |
 | Cartoon toolkit (shapes, tubes, splines, lettering, palette) | `src/toon/toon.js` |
-| Characters: walkers, owners, the booster, neighbours, cars, pigeons, cat, dog | `src/toon/chars.js` |
+| Characters: walkers (8-frame bouncy cycle), owners and loiterers (10 snap poses each), the booster, window neighbours | `src/toon/chars.js` |
+| Pigeons, alley cat, stoop dog, traffic | `src/toon/critters.js` |
 | Neighbourhood storefronts, the van, construction, street furniture | `src/toon/facades.js` |
 | Street engine: camera, perspective pass, cross streets, people, traffic, neon | `src/toon/street.js` |
 | Aerial intro | `src/toon/aerial.js` |
@@ -54,7 +55,7 @@ Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed i
 - Search finds stores, regions, countries, brands and cities, then walks you to the right door.
 
 ## Moving parts
-Eight-frame walk cycles with giant shoes, side walls and cross streets swinging in perspective as you walk, traffic lights cycling with a walk / don't-walk hand, nosy neighbours popping up in windows, a sleeping stoop dog snoring Z's, laundry flapping over Rocinha, cars bouncing with exhaust puffs, pigeons that scatter, flickering neon, manhole and alley steam, generator smoke, loiterers talking local slang, sneakers swinging on the power line, birds and drifting clouds. Walking through a door slams a show-style title card for that store.
+Characters animate on held frames, 12 a second: springy eight-frame walks, loiterers bouncing to the beat then snapping through talk, point, shrug, thumbs-up and a hop, owners waving and gesturing behind the counter, side walls and cross streets swinging in perspective as you walk, traffic lights cycling with a walk / don't-walk hand, nosy neighbours popping up in windows, a sleeping stoop dog snoring Z's, laundry flapping over Rocinha, cars bouncing with exhaust puffs, pigeons that scatter, flickering neon, manhole and alley steam, generator smoke, loiterers talking local slang, sneakers swinging on the power line, birds and drifting clouds. Walking through a door slams a show-style title card for that store.
 
 ## Performance
 The block and skylines are drawn once into off-screen tiles (≤4000px each) at your screen's resolution. Each frame copies the visible tiles, draws a handful of perspective polygons, and a few dozen pre-rendered sprites (people, cars, props, neon). The street stops rendering while you're inside a store.

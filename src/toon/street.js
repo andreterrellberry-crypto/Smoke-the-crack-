@@ -2,7 +2,8 @@
 // cross streets that swing toward the vanishing point as you walk) and a live layer of people, traffic and gags.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, measure, dots, rng, pick, shade } from './toon.js';
 import { FACADES, SW, ALLEY_W, construction, paintBoosterCorner, lampPost, hydrant, trashCan, newsBox, mailbox, meter, bench, pole, signalPole } from './facades.js';
-import { buildWalker, buildStander, buildHead, BOOSTER, NEIGHBOURS, pedestrianSpec, pigeonFrames, catFrames, dogFrames, carFrames, carType, FRAME } from './chars.js';
+import { buildWalker, buildStander, buildHead, BOOSTER, NEIGHBOURS, pedestrianSpec, FRAME } from './chars.js';
+import { pigeonFrames, catFrames, dogFrames, carFrames, carType } from './critters.js';
 
 export const MAIN_H = 268;
 export const G = 192; // building line
@@ -17,7 +18,7 @@ export const CROSS_W = 150;
 export const PS = 0.68; // people on the street are drawn at 68% of their frame size
 const FW = FRAME.w * PS, FH = FRAME.h * PS, FOX = FRAME.ox * PS, FOY = FRAME.oy * PS;
 const VIEW_H = 285;
-const uiTop = () => (innerWidth > 820 ? 118 : 160);
+const uiTop = () => (innerWidth > 820 ? 122 : 162);
 const SLANG = {
   'north-america': ['WORD!', 'DEADASS?'], canada: ['WAGWAN', 'MANDEM!'], 'south-america': ['E AÍ!', 'SUAVE'],
   europe: ['WESH!', 'ALLEZ!'], africa: ['WAHALA!', 'OYA!'], asia: ['YABAI!', 'SUGOI'], oceania: ['OI!', 'ESHAY BRAH'],
@@ -56,16 +57,17 @@ function sprite(w, h, R, fn, seed = 3) {
   fn(ctx, rng(seed));
   return c;
 }
-// TV-style label pill for each store
+// painted sign board for each store: slab lettering, pinstripe border, a red count plate
 function pill(label, count, bg, fg, R) {
   const size = 6;
-  const tw = measure(label, size, FONT.block) + 8, cw = count != null ? measure(String(count), size, FONT.block) + 7 : 0;
-  const w = tw + cw + 2, h = size + 6;
-  return sprite(w + 1.6, h + 1.6, R, (x) => {
-    rrect(x, 1.6, 1.6, w - 0.4, h - 0.4, h / 2, K, 0);
-    rrect(x, 0.4, 0.4, w - 0.4, h - 0.4, h / 2, bg, LW);
-    if (count != null) { rrect(x, w - cw - 0.6, 0.4, cw, h - 0.4, h / 2, C.pink, LW); text(x, String(count), w - cw / 2 - 0.6, h / 2 + 0.8, { size, font: FONT.block, fill: '#ffffff' }); }
-    text(x, label, tw / 2 + 1, h / 2 + 0.8, { size, font: FONT.block, fill: fg });
+  const tw = measure(label, size, FONT.slab) + 9, cw = count != null ? measure(String(count), size, FONT.slab) + 7 : 0;
+  const w = tw + cw, h = size + 6.4;
+  return sprite(w + 2, h + 2, R, (x) => {
+    rect(x, 1, 1, w, h, bg, 1.1);
+    rect(x, 2.4, 2.4, tw - 2.8, h - 2.8, null, 0);
+    x.lineWidth = 0.45; x.strokeStyle = fg; x.strokeRect(2.6, 2.6, tw - 3.2, h - 3.2);
+    if (count != null) { rect(x, 1 + tw, 1, cw, h, C.red, 1.1); text(x, String(count), 1 + tw + cw / 2, 1 + h / 2 + 0.6, { size, font: FONT.slab, fill: C.yellow }); }
+    text(x, label, 1 + tw / 2, 1 + h / 2 + 0.6, { size, font: FONT.slab, fill: fg });
   });
 }
 // round speech balloon with a tail
@@ -76,8 +78,8 @@ export function balloon(lines, R, o = {}) {
   const tail = o.tail ?? 0.75;
   return sprite(w + 2, h + 8, R, (x) => {
     const tx = 1 + w * tail;
-    poly(x, [[tx - 3.4, h - 1], [tx + (o.tailDir ?? 2.6), h + 7], [tx + 3, h - 1.4]], '#ffffff', LW);
-    rrect(x, 1, 1, w, h, Math.min(h / 2, 7), '#ffffff', LW);
+    poly(x, [[tx - 3.4, h - 1], [tx + (o.tailDir ?? 2.6), h + 7], [tx + 3, h - 1.4]], '#ffffff', 1.1);
+    rrect(x, 1, 1, w, h, Math.min(h / 2, 7), '#ffffff', 1.1);
     rect(x, tx - 2.6, h - 1.8, 5, 2.4, '#ffffff', 0);
     lines.forEach((l, i) => text(x, l, 1 + w / 2, 1 + h / 2 + (i - (lines.length - 1) / 2) * size * 1.15 + 0.6, { size, font: FONT.block, fill: o.colors?.[i] || K, stroke: o.colors?.[i] && o.colors[i] !== K ? K : null, sw: size * 0.16 }));
   });
@@ -277,7 +279,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     if (!openById[sid]) return;
     const top = pick(r, tops2);
     const spec = { ...pedestrianSpec(top, null, pick(r, shoes), r), pose: { left: i % 2 ? 'hips' : 'down', right: i % 3 ? 'down' : 'hips' } };
-    loiter.push({ item: top, sp: buildStander(spec, Rc), x: segOf(sid).x + ox, y, t: r() * 6, say: balloon([SLANG[sid][i % 2]], R, { size: 5.4, tail: 0.3, tailDir: -2 }) });
+    loiter.push({ item: top, sp: buildStander(spec, Rc), x: segOf(sid).x + ox, y, t: r() * 8, off: Math.floor(r() * 4), say: balloon([SLANG[sid][i % 2]], R, { size: 5.4, tail: 0.3, tailDir: -2 }) });
   });
   const booster = buildStander(BOOSTER, Rc);
   const heads = NEIGHBOURS.map((n) => buildHead(n, R));
@@ -391,7 +393,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
   addEventListener('keyup', (e) => keys.delete(e.key));
 
   // ---------- simulation ----------
-  let t = 0, entering = null, enterT = 0;
+  let t = 0, tk = -1, entering = null, enterT = 0;
   const onScreen = (x, pad = 0) => x > camX - pad && x < camX + viewW + pad;
   const neonState = neon.map(() => ({ on: true, next: Math.random() * 6 }));
   const peek = { w: null, t: 0, next: 2, head: 0 };
@@ -407,6 +409,12 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
   function update(dt) {
     if (!active) return;
     t += dt;
+    // characters animate on held frames (12 a second) for that jumpy cartoon timing
+    const nt = Math.floor(t * 12);
+    if (nt !== tk) {
+      tk = nt;
+      for (const p of peds) { p.dx = p.x; p.df = Math.floor(p.t) % 8; }
+    }
     let moving = false;
     if (walking) {
       walking.t += dt;
@@ -589,7 +597,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     // a neighbour pops up in a window
     if (peek.w) {
       const [wx, wy, ww, wh] = peek.w;
-      const k2 = peek.t < 0.3 ? peek.t / 0.3 : peek.t > 2.5 ? Math.max(0, (2.8 - peek.t) / 0.3) : 1;
+      const k2 = Math.round((peek.t < 0.3 ? peek.t / 0.3 : peek.t > 2.5 ? Math.max(0, (2.8 - peek.t) / 0.3) : 1) * 3) / 3;
       const hs = Math.min(ww, wh) / 15;
       ctx.save();
       ctx.beginPath(); ctx.rect(wx - cx, wy + oy, ww, wh); ctx.clip();
@@ -614,11 +622,11 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     }
     // the van's cat + the booster leaning by the open trunk
     if (alleyInfo) {
-      ctx.drawImage(cat[Math.floor(t * 1.4) % 2], alleyInfo.cat.x - cx, oy + alleyInfo.cat.y, 18, 14);
+      ctx.drawImage(cat[Math.floor(tk / 8) % 2], alleyInfo.cat.x - cx, oy + alleyInfo.cat.y - 2, 20, 16);
       const b = alleyInfo.booster;
       const near = Math.abs(b.x + 30 - (cx + viewW / 2)) < viewW * 0.35 || hover === 'booster';
-      const ph = t % 3.2;
-      const bf = near && ph > 0.4 && ph < 1.8 ? (Math.floor(t * 5) % 2 ? booster.wave : booster.talk) : t % 4.4 < 0.2 ? booster.blink : booster.idle;
+      const ph = (tk / 12) % 3.2, beat = Math.floor(tk / 4);
+      const bf = near && ph > 0.4 && ph < 2.2 ? [booster.talk, booster.point, booster.talk2, booster.point][beat % 4] : (tk / 12) % 4.4 < 0.15 ? booster.blink : beat % 2 ? booster.bob : booster.idle;
       drawFig(bf, b.x - cx, oy + b.y - 7, false);
       if (near) ctx.drawImage(bubble, b.x - bubble.uw * 0.82 + 2 - cx, oy + b.y - 7 - FH - bubble.uh + 8, bubble.uw, bubble.uh);
       const tg = bTags[hover === 'booster' ? 'h' : 'n'];
@@ -627,21 +635,25 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     // people, dog and pigeons, back to front
     const actors = [
       ...loiter.map((l) => ({ y: l.y, draw: () => {
-        const ph = (t + l.t) % 7;
-        const talking = ph > 3 && ph < 4.6;
-        const fr = ph < 0.15 ? l.sp.blink : talking ? (Math.floor(ph * 6) % 2 ? l.sp.talk : l.sp.idle) : ph > 5.2 && ph < 6.2 ? l.sp.look : l.sp.idle;
+        const ph = (tk / 12 + l.t) % 8, beat = Math.floor((tk + l.off) / 4);
+        const talking = ph > 4.4 && ph < 6.4;
+        const sp = l.sp;
+        const fr = talking ? [sp.talk, sp.talk2, sp.talk, sp.point, sp.talk, sp.thumb][beat % 6]
+          : ph >= 6.4 && ph < 6.7 ? sp.hop
+          : ph >= 6.7 ? (ph < 7.6 ? sp.look : sp.idle)
+          : ph % 2.2 < 0.15 ? sp.blink : beat % 2 ? sp.bob : sp.idle;
         drawFig(fr, l.x - cx, oy + l.y, false);
         if (talking && onScreen(l.x)) ctx.drawImage(l.say, l.x - cx - 4, oy + l.y - FH - l.say.uh + 8, l.say.uw, l.say.uh);
       } })),
-      ...peds.map((p) => ({ y: p.y, draw: () => drawFig(p.pause > 0 ? p.sp.idle : p.sp.frames[Math.floor(p.t) % 8], p.x - cx, oy + p.y, p.dir < 0) })),
+      ...peds.map((p) => ({ y: p.y, draw: () => drawFig(p.pause > 0 ? p.sp.idle : p.sp.frames[p.df ?? 0], (p.pause > 0 ? p.x : p.dx ?? p.x) - cx, oy + p.y, p.dir < 0) })),
       ...(dogAt ? [{ y: dogAt.y, draw: () => {
-        ctx.drawImage(dog[Math.floor(t * 1.2) % 2], dogAt.x - cx, oy + dogAt.y - 14, 30, 14);
+        ctx.drawImage(dog[Math.floor(tk / 9) % 2], dogAt.x - cx, oy + dogAt.y - 16, 34, 17);
         for (let i = 0; i < 2; i++) { const zt = (t * 0.5 + i * 0.5) % 1; ctx.globalAlpha = 1 - zt; ctx.drawImage(zzz, dogAt.x + 24 - cx + zt * 6, oy + dogAt.y - 18 - zt * 14, 5 + zt * 3, 5 + zt * 3); }
         ctx.globalAlpha = 1;
       } }] : []),
       ...flocks.flatMap((fl) => fl.birds.map((b, i) => ({ y: 213, draw: () => {
-        if (fl.flying > 0) { const lift = (3 - fl.flying) * 26; ctx.drawImage(pigeons[2 + (Math.floor(t * 12 + i) % 2)], fl.x + b.o + lift * 0.8 - cx, oy + 203 - lift - i * 3, 12.6, 10.8); }
-        else ctx.drawImage(pigeons[b.peck], fl.x + b.o - cx, oy + 203, 12.6, 10.8);
+        if (fl.flying > 0) { const lift = Math.floor((3 - fl.flying) * 12) / 12 * 26; ctx.drawImage(pigeons[2 + ((tk + i) % 2)], fl.x + b.o + lift * 0.8 - cx, oy + 203 - lift - i * 3, 14.4, 11.7); }
+        else ctx.drawImage(pigeons[b.peck], fl.x + b.o - cx, oy + 202, 14.4, 11.7);
       } }))),
     ].sort((a, b) => a.y - b.y);
     for (const a of actors) a.draw();
@@ -679,9 +691,9 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     }
     // traffic: bouncing bodies + exhaust puffs
     for (const c of cars) {
-      const sx2 = c.x - cx, y = oy + LANE - 30 + Math.abs(Math.sin(t * 16 + c.x * 0.05)) * -0.8;
+      const sx2 = c.x - cx, y = oy + LANE - 30 - ((tk + Math.round(c.speed)) % 3 === 0 ? 1 : 0);
       drawPuffs(c.p, '#ffffff', 0.9, cx, oy);
-      const fr = c.frames[Math.floor(t * 10) % 2];
+      const fr = c.frames[tk % 2];
       ctx.drawImage(fr, sx2, y, c.w, 32);
     }
     for (const s of fx.steam) if (s.road) drawPuffs(s.p, '#ffffff', 2.4, cx, oy);
