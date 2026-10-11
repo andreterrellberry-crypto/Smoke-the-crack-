@@ -20,10 +20,6 @@ const SPX = 0.1; // world units per lineup pixel: the cast keeps its relative he
 const castH = (id) => castPx(id) * SPX;
 const VIEW_H = 285;
 const uiTop = () => (innerWidth > 820 ? 122 : 162);
-const SLANG = {
-  'north-america': ['WORD!', 'DEADASS?'], canada: ['WAGWAN', 'MANDEM!'], 'south-america': ['E AÍ!', 'SUAVE'],
-  europe: ['WESH!', 'ALLEZ!'], africa: ['WAHALA!', 'OYA!'], asia: ['YABAI!', 'SUGOI'], oceania: ['OI!', 'ESHAY BRAH'],
-};
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 export const pickR = () => Math.max(2, Math.min(5, Math.ceil(Math.min(innerHeight / VIEW_H, innerWidth / 170) * (devicePixelRatio || 1))));
 
@@ -263,14 +259,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
   }
   const mid = tiled(midW, 204, Rb, midP);
 
-  // ---------- characters: each owner hangs out by their own front door ----------
-  const owners = [];
-  stores.forEach((st, i) => {
-    if (!openById[st.id] || !doors[st.id]) return;
-    const d = doors[st.id], seg = segOf(st.id);
-    const right = d.x + d.w + 16 < seg.x + SW - 12;
-    owners.push({ id: st.id, act: puppet(st.id), x: right ? d.x + d.w + 13 : d.x - 13, y: 201 + (i % 2), t: r() * 8, off: Math.floor(r() * 4), say: balloon([SLANG[st.id][i % 2]], R, { size: 5.4, tail: 0.3, tailDir: -2 }) });
-  });
+  // ---------- characters: owners work inside their shops; the booster works the van ----------
   const booster = puppet('booster');
   const pigeons = pigeonFrames(R);
   const cat = catFrames(R);
@@ -330,7 +319,6 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
   const toWorld = (cx, cy) => ({ x: camX + cx / scale, y: cy / scale - mainY });
   function hitTest(cx, cy) {
     const { x, y } = toWorld(cx, cy);
-    for (const o of owners) if (Math.abs(x - o.x) < 9 && y > o.y - castH(o.id) && y < o.y + 2) return { store: o.id };
     for (const seg of segs) {
       if (x < seg.x || x >= seg.x + seg.w || y > G + 4) continue;
       if (seg.kind === 'alley') return { booster: true };
@@ -585,19 +573,6 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     }
     // people, dog and pigeons, back to front
     const actors = [
-      ...owners.map((l) => ({ y: l.y, draw: () => {
-        if (!onScreen(l.x, 40)) return;
-        const ph = (tk / 12 + l.t) % 8, beat = Math.floor((tk + l.off) / 4);
-        const talking = ph > 4.4 && ph < 6.4;
-        const sp = l.act;
-        const fr = hover === l.id ? [sp.wave, sp.hop, sp.wave, sp.talk][beat % 4]
-          : talking ? [sp.talk, sp.talk2, sp.talk, sp.point, sp.talk, sp.laugh][beat % 6]
-          : ph >= 6.4 && ph < 6.7 ? sp.hop
-          : ph >= 6.7 ? (ph < 7.6 ? sp.look : sp.idle)
-          : ph % 2.2 < 0.15 ? sp.blink : beat % 2 ? sp.bob : sp.idle;
-        drawFig(fr, l.x - cx, oy + l.y, false);
-        if (talking) ctx.drawImage(l.say, l.x - cx - 4, oy + l.y - castH(l.id) - l.say.uh + 6, l.say.uw, l.say.uh);
-      } })),
       ...(dogAt ? [{ y: dogAt.y, draw: () => {
         ctx.drawImage(dog[Math.floor(tk / 9) % 2], dogAt.x - cx, oy + dogAt.y - 20, 33.6, 22.4);
         for (let i = 0; i < 2; i++) { const zt = (t * 0.5 + i * 0.5) % 1; ctx.globalAlpha = 1 - zt; ctx.drawImage(zzz, dogAt.x + 24 - cx + zt * 6, oy + dogAt.y - 18 - zt * 14, 5 + zt * 3, 5 + zt * 3); }

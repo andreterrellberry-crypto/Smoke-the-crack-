@@ -28,7 +28,7 @@ No images to download and no 3D engine: every building, person, car and garment 
 - **No stock = under construction.** Any region with zero items is boarded up with scaffolding, caution tape and cones, and can't be entered. Add stock and it opens automatically.
 - **Inside a store** the marketplace lists that region's pieces, with country chips to filter. The city each piece came from shows on its card.
 - **Booster Corner**: a van backed into the alley with its rear doors open. Tap the trunk and the camera zooms into it. The booster's stock is rare pieces you won't find anywhere else, from $25 bootlegs and staff-only tees to five-figure grails.
-- **Owners hang out by their front doors**, talking local slang. Tap one (or the shop) to walk in.
+- **Owners run their shops from behind the counter**, waist-deep behind it like a real till. Tap a shop to walk in.
 
 ## Files
 
@@ -56,7 +56,7 @@ Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed i
 - Search finds stores, regions, countries, brands and cities, then walks you to the right door.
 
 ## Moving parts
-Characters animate on held frames, 12 a second: owners out front bouncing to the beat then snapping through talk, laugh, lean and a hop (and waving when you hover their shop), owners gesturing behind the counter, side walls and cross streets swinging in perspective as you walk, traffic lights cycling with a walk / don't-walk hand, Melvin the hound asleep on the stoop snoring Z's, laundry flapping over Rocinha, cars bouncing with exhaust puffs, pigeons that scatter, flickering neon, manhole and alley steam, generator smoke, sneakers swinging on the power line, birds and drifting clouds. Walking through a door slams a show-style title card for that store.
+Characters animate on held frames, 12 a second: owners gesturing behind the counter, side walls and cross streets swinging in perspective as you walk, traffic lights cycling with a walk / don't-walk hand, Melvin the hound asleep on the stoop snoring Z's, laundry flapping over Rocinha, cars bouncing with exhaust puffs, pigeons that scatter, flickering neon, manhole and alley steam, generator smoke, sneakers swinging on the power line, birds and drifting clouds. Walking through a door slams a show-style title card for that store.
 
 ## Performance
 The block and skylines are drawn once into off-screen tiles (≤4000px each) at your screen's resolution. Each frame copies the visible tiles, draws a handful of perspective polygons, and a few dozen sprites (the cast, cars, props, neon). The street stops rendering while you're inside a store.

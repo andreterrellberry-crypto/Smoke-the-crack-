@@ -3,14 +3,13 @@
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, clip, rng, pick, shade } from './toon.js';
 import { itemCanvas } from './items.js';
 import { catFrames } from '../cast/animals.js';
-import { drawPuppet, puppet, puppetPortrait, castPx, shopLight, LIGHT } from '../cast/puppet.js';
+import { drawPuppet, puppet, puppetPortrait, shopLight, LIGHT, CAST } from '../cast/puppet.js';
 import { neon, vanRear, tag } from './facades.js';
 
 export const RW = 300;
 export const RH = 150;
 export const OWNER_X = 110;
 export const OWNER_FEET = 134;
-const RPX = 0.165; // room units per lineup pixel: owners stand larger than life in their own shop
 const FLOOR = 118;
 const COUNTER_Y = 104;
 export const roomR = () => Math.max(3, Math.min(6, Math.ceil(Math.max(innerWidth / RW, innerHeight / RH) * (devicePixelRatio || 1))));
@@ -214,10 +213,11 @@ export function buildOwner(storeId, R) {
   o.light = shopLight(STORE_LIGHT[storeId] || '#ffd21f');
   return o;
 }
-// short owners stand on a crate so their head and hands clear the counter
+// every owner stands with their waist just below the counter top, so the counter hides everything from the
+// belt down and the same amount of each of them shows above it
 export function drawOwner(ctx, pose, actor) {
-  const H = castPx(pose.id) * RPX, lift = Math.max(0, 62 - H * 0.55);
-  drawPuppet(ctx, pose.id, OWNER_X, OWNER_FEET - lift, H, pose, { light: actor.light, shadow: false });
+  const m = CAST[pose.id], H = 80 / m.hip;
+  drawPuppet(ctx, pose.id, OWNER_X, COUNTER_Y + 5 + (1 - m.hip) * H, H, pose, { light: actor.light, shadow: false });
 }
 const STORE_LIGHT = { 'north-america': '#ffd21f', canada: '#7fe0ff', 'south-america': '#ff8a1f', europe: '#c6c2ff', africa: '#8fe03a', asia: '#ff6fb5', oceania: '#ffe066' };
 export { COUNTER_Y };
