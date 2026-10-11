@@ -1,11 +1,11 @@
 import './style.css';
-import { STORES, ITEMS, BOOSTER_ITEMS, STORE_BY_ID, LOC_BY_ID, COUNT_BY_STORE, itemsForScope, storeOfItem, isOpen } from './data/inventory.js';
+import { STORES, BOOSTER_ITEMS, STORE_BY_ID, COUNT_BY_STORE, itemsForScope, isOpen } from './data/inventory.js';
 import { ensureFonts } from './toon/toon.js';
+import { loadCast } from './cast/puppet.js';
 import { createStreet } from './toon/street.js';
 import { buildAerial, topCar, topPerson, AH } from './toon/aerial.js';
 import { buildRoom, buildCounter, buildOwner, drawOwner, buildTrunkScene, buildTrunkActor, drawBoosterBust, portrait, roomR, RW, RH, TW, TH, OWNER_X } from './toon/interior.js';
 import { createMarket } from './ui/market.js';
-import { itemImg } from './toon/items.js';
 
 const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -18,7 +18,7 @@ const itemsByStore = Object.fromEntries(STORES.map((s) => [s.id, itemsForScope({
 const openById = Object.fromEntries(STORES.map((s) => [s.id, isOpen(s)]));
 
 // canvas lettering needs the cartoon fonts in before anything is drawn
-await ensureFonts(["'Alfa Slab One'", "'Bowlby One'", "700 'Fredoka'", "'Pacifico'", "'Bungee'", "'Rubik Bubbles'", ["900 'Noto Sans JP'", '古着祭ニセモノ禁止']]);
+await Promise.all([loadCast(), ensureFonts(["'Alfa Slab One'", "'Bowlby One'", "700 'Fredoka'", "'Pacifico'", "'Bungee'", "'Rubik Bubbles'", ["900 'Noto Sans JP'", '古着祭ニセモノ禁止']])]);
 document.body.classList.add('toon');
 
 // show-style title card that slams in while the camera dives through a door
@@ -44,15 +44,12 @@ const street = createStreet({
   itemsByStore,
   openById,
   countById: COUNT_BY_STORE,
-  pedItems: ITEMS.filter((i) => openById[storeOfItem(i).id]),
   onStore: (id) => goStore(id),
   boosterItems: BOOSTER_ITEMS,
   onBooster: () => goBooster(),
-  onPedestrian: showPed,
   onHover: (h, x, y) => {
     let html = '';
-    if (h?.ped) html = `<b>Wearing</b>${esc(h.ped.item.brand)} — ${esc(h.ped.item.name)}<em>${money(h.ped.item.price)} · tap to cop</em>`;
-    else if (h?.store) {
+    if (h?.store) {
       const st = STORE_BY_ID[h.store];
       html = openById[h.store]
         ? `<b>${esc(st.name)}</b>${esc(st.owner)} · ${esc(st.from)}<em>${COUNT_BY_STORE[h.store]} pieces · tap to walk in</em>`
@@ -105,7 +102,6 @@ function updateDirectory() {
 // ---------- Navigation ----------
 let navToken = 0;
 async function goStore(id, country) {
-  hidePed();
   finishIntro(true);
   const st = STORE_BY_ID[id];
   if (mode === 'interior') {
@@ -156,7 +152,6 @@ async function exitInterior() {
 
 // Booster Corner: walk up to the van, then the camera zooms straight into the open trunk
 async function goBooster() {
-  hidePed();
   finishIntro(true);
   if (mode === 'interior') {
     if (currentStore === 'booster') return openMarket({ level: 'booster' });
@@ -198,7 +193,7 @@ function storeScene(st) {
     bg: c.bg, actor: c.actor, w: RW, h: RH, focusX: OWNER_X, focusY: 86, bustH: 70, bustFX: 0.24,
     who: st.owner, where: `${st.name} · ${st.from}`, line: st.greeting,
     draw(fr) {
-      drawOwner(rctx, fr, c.actor.lift);
+      drawOwner(rctx, fr, c.actor);
       rctx.drawImage(c.counter, 0, 0, RW, RH);
     },
   };
@@ -264,30 +259,6 @@ $('#shop-all').onclick = () => {
   finishIntro(true);
   openMarket({ level: 'all' });
 };
-
-// ---------- Pedestrian card ----------
-const pedCard = $('#ped-card');
-function showPed(item, x, y) {
-  const st = storeOfItem(item);
-  const loc = LOC_BY_ID[item.locId];
-  pedCard.innerHTML = `<button class="x" aria-label="Close">✕</button><div class="mini">${itemImg(item)}</div>
-    <div><small>Spotted on the block</small><b>${esc(item.brand)}</b><span>${esc(item.name)}</span><em>${money(item.price)} · ${esc(loc.city)}, ${esc(loc.country)}</em></div>
-    <div class="pc-actions"><button class="add">${market.inBag(item.id) ? 'In Bag ✓' : 'Add to Bag'}</button><button class="visit">Go to ${esc(st.name)} ›</button></div>`;
-  const w = Math.min(320, innerWidth - 24);
-  pedCard.style.width = `${w}px`;
-  pedCard.style.left = `${Math.max(12, Math.min(innerWidth - w - 12, x - w / 2))}px`;
-  pedCard.style.top = `${Math.max(90, Math.min(innerHeight - 230, y - 210))}px`;
-  pedCard.hidden = false;
-  pedCard.querySelector('.x').onclick = hidePed;
-  pedCard.querySelector('.add').onclick = (e) => {
-    market.toggleCart(item.id);
-    e.currentTarget.textContent = market.inBag(item.id) ? 'In Bag ✓' : 'Add to Bag';
-  };
-  pedCard.querySelector('.visit').onclick = () => goStore(st.id, loc.country);
-}
-function hidePed() {
-  pedCard.hidden = true;
-}
 
 // ---------- Aerial intro: straight down over the block, sweep it, then drop to the sidewalk ----------
 const aerial = $('#aerial');
@@ -361,7 +332,6 @@ aerial.addEventListener('pointerdown', () => finishIntro(true));
 addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if ($('#bag').classList.contains('open')) $('#bag').classList.remove('open');
-  else if (!pedCard.hidden) hidePed();
   else if (market.isOpen()) market.close();
   else if (mode === 'interior') exitInterior();
 });

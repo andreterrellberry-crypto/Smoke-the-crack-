@@ -2,14 +2,15 @@
 // real stock on the racks, a gag sign or two on the wall.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, clip, rng, pick, shade } from './toon.js';
 import { itemCanvas } from './items.js';
-import { buildStander, buildPortrait, shoulderLift, OWNERS, BOOSTER, CAST_FRAME as FRAME, catFrames } from '../cast/cast.js';
+import { catFrames } from '../cast/animals.js';
+import { drawPuppet, puppet, puppetPortrait, castPx, shopLight, LIGHT } from '../cast/puppet.js';
 import { neon, vanRear, tag } from './facades.js';
 
 export const RW = 300;
 export const RH = 150;
 export const OWNER_X = 110;
 export const OWNER_FEET = 134;
-export const OS = 0.76; // owners stand larger than life in their own shop
+const RPX = 0.165; // room units per lineup pixel: owners stand larger than life in their own shop
 const FLOOR = 118;
 const COUNTER_Y = 104;
 export const roomR = () => Math.max(3, Math.min(6, Math.ceil(Math.max(innerWidth / RW, innerHeight / RH) * (devicePixelRatio || 1))));
@@ -209,13 +210,16 @@ export function buildCounter(store, color, R) {
 }
 
 export function buildOwner(storeId, R) {
-  const o = buildStander({ ...OWNERS[storeId] }, Math.min(5, R * OS * 1.15), 1.6);
-  o.lift = shoulderLift(OWNERS[storeId]) * OS;
+  const o = puppet(storeId);
+  o.light = shopLight(STORE_LIGHT[storeId] || '#ffd21f');
   return o;
 }
-export function drawOwner(ctx, fr, lift = 0) {
-  ctx.drawImage(fr, OWNER_X - FRAME.ox * OS, OWNER_FEET - lift - FRAME.oy * OS, FRAME.w * OS, FRAME.h * OS);
+// short owners stand on a crate so their head and hands clear the counter
+export function drawOwner(ctx, pose, actor) {
+  const H = castPx(pose.id) * RPX, lift = Math.max(0, 62 - H * 0.55);
+  drawPuppet(ctx, pose.id, OWNER_X, OWNER_FEET - lift, H, pose, { light: actor.light, shadow: false });
 }
+const STORE_LIGHT = { 'north-america': '#ffd21f', canada: '#7fe0ff', 'south-america': '#ff8a1f', europe: '#c6c2ff', africa: '#8fe03a', asia: '#ff6fb5', oceania: '#ffe066' };
 export { COUNTER_Y };
 
 // ---------- Booster Corner close-up: the camera inside the open trunk at night ----------
@@ -239,14 +243,13 @@ export function buildTrunkScene(items, R) {
   return c;
 }
 export function buildTrunkActor(R) {
-  return buildStander(BOOSTER, Math.min(6, R * 1.15), 1.5);
+  return puppet('booster');
 }
-// The booster leans into frame: head + chest of his figure
-export function drawBoosterBust(ctx, fr) {
-  const k = fr.width / FRAME.w;
-  ctx.drawImage(fr, 6 * k, 8 * k, 86 * k, 86 * k, -10, 84, 86, 86);
+// The booster leans into frame from the bottom left: head and chest, lit by the trunk lamp
+export function drawBoosterBust(ctx, pose) {
+  drawPuppet(ctx, 'booster', 40, 300, 230, pose, { light: LIGHT.night, shadow: false });
 }
 // head-and-shoulders portrait for the dialogue box
-export function portrait(actor, R = 4) {
-  return buildPortrait(actor.spec, R);
+export function portrait(actor) {
+  return puppetPortrait(actor.id, 160);
 }

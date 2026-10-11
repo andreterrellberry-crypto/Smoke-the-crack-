@@ -34,10 +34,10 @@ button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 
 /* a painted board: ink border, a pinstripe inset in the lettering colour, a hard bottom edge */
-.actions button, #directory button, #back, #browse, #drop, .add, .pc-actions button, #checkout, .crumb, #country-chips button {
+.actions button, #directory button, #back, #browse, #drop, .add, #checkout, .crumb, #country-chips button {
   border: var(--line); border-radius: 3px; box-shadow: var(--pin), var(--edge); transition: transform 0.08s, box-shadow 0.08s;
 }
-.actions button:active, #directory button:active, #back:active, #browse:active, #drop:active, .add:active, .pc-actions button:active, #checkout:active { transform: translateY(3px); box-shadow: var(--pin), 0 1px 0 var(--ink); }
+.actions button:active, #directory button:active, #back:active, #browse:active, #drop:active, .add:active, #checkout:active { transform: translateY(3px); box-shadow: var(--pin), 0 1px 0 var(--ink); }
 
 /* ---------- Street ---------- */
 #street-wrap { position: fixed; inset: 0; overflow: hidden; opacity: 0; }
@@ -156,20 +156,7 @@ body[data-mode='interior'] #directory, body[data-mode='interior'] #hint, body[da
 body[data-mode='interior']:not(.panel-open) #browse { display: block; }
 
 /* ---------- Pedestrian card ---------- */
-#ped-card { position: fixed; z-index: 36; background: var(--white); border: var(--line); border-radius: 3px; box-shadow: var(--edge); padding: 0 12px 12px; display: grid; grid-template-columns: 72px 1fr; gap: 10px; animation: pop 0.3s steps(4); }
-#ped-card[hidden] { display: none; }
 @keyframes pop { from { transform: scale(0.6) rotate(-4deg); opacity: 0; } }
-#ped-card::before { content: 'SPOTTED ON THE BLOCK'; grid-column: 1 / -1; margin: 0 -12px; background: var(--green); color: var(--white); font: 12px/1 var(--slab); letter-spacing: 0.04em; padding: 7px 12px 6px; border-bottom: var(--line); box-shadow: inset 0 0 0 2px var(--green), inset 0 0 0 3.5px var(--white); }
-#ped-card .mini { width: 72px; height: 72px; background: var(--cyan); }
-#ped-card .mini img { width: 64px; height: 64px; }
-#ped-card small { display: none; }
-#ped-card b { display: block; font: 16px/1.1 var(--slab); color: var(--red); }
-#ped-card span { display: block; font-weight: 700; }
-#ped-card em { display: block; font-style: normal; font-size: 14px; color: var(--muted); font-weight: 600; }
-.pc-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
-.pc-actions button { flex: 1; padding: 7px 8px 5px; font: 13px/1.1 var(--slab); background: var(--yellow); --pc: var(--yellow); --ps: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-actions .visit { background: var(--white); color: var(--blue); --pc: var(--white); --ps: var(--blue); }
-#ped-card .x { position: absolute; top: -14px; right: -14px; width: 32px; height: 32px; border: var(--line); border-radius: 3px; background: var(--red); color: var(--white); font-weight: 700; padding: 0; box-shadow: 0 3px 0 var(--ink); }
 
 /* ---------- Market panel: one big painted board ---------- */
 #market, #bag { position: fixed; top: 78px; right: 12px; bottom: 12px; width: min(560px, 46vw); z-index: 25; background: var(--cream); border: 4px solid var(--ink); border-radius: 4px; box-shadow: 0 6px 0 var(--ink); display: flex; flex-direction: column; overflow: hidden; transform: translateX(125%); transition: transform 0.45s steps(6); }
@@ -290,5 +277,5 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
   body:not(.panel-open) #toast { bottom: 96px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .card, #ped-card, #bag-btn.bump, #card.show > div, #card.show::before, .aerial-title .issue i { animation: none; }
+  .card, #bag-btn.bump, #card.show > div, #card.show::before, .aerial-title .issue i { animation: none; }
 }

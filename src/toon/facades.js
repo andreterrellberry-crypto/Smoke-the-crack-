@@ -2,7 +2,7 @@
 // Drawn in world units on the street layer: the building line is y = G, buildings rise toward -y.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, tube, text, measure, clip, dots, shade, pick } from './toon.js';
 import { itemCanvas } from './items.js';
-import { catFrames } from '../cast/cast.js';
+import { catFrames } from '../cast/animals.js';
 
 export const SW = 160;
 export const ALLEY_W = 100;
