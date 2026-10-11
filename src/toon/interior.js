@@ -209,7 +209,7 @@ export function buildCounter(store, color, R) {
 }
 
 export function buildOwner(storeId, R) {
-  const o = buildStander({ ...OWNERS[storeId] }, Math.min(5, R * OS * 1.15));
+  const o = buildStander({ ...OWNERS[storeId] }, Math.min(5, R * OS * 1.15), 1.6);
   o.lift = shoulderLift(OWNERS[storeId]) * OS;
   return o;
 }
@@ -239,7 +239,7 @@ export function buildTrunkScene(items, R) {
   return c;
 }
 export function buildTrunkActor(R) {
-  return buildStander(BOOSTER, Math.min(6, R * 1.15));
+  return buildStander(BOOSTER, Math.min(6, R * 1.15), 1.5);
 }
 // The booster leans into frame: head + chest of his figure
 export function drawBoosterBust(ctx, fr) {
