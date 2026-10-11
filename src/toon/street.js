@@ -2,8 +2,8 @@
 // cross streets that swing toward the vanishing point as you walk) and a live layer of people, traffic and gags.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, measure, dots, rng, pick, shade } from './toon.js';
 import { FACADES, SW, ALLEY_W, construction, paintBoosterCorner, lampPost, hydrant, trashCan, newsBox, mailbox, meter, bench, pole, signalPole } from './facades.js';
-import { buildWalker, buildStander, buildHead, BOOSTER, NEIGHBOURS, pedestrianSpec, FRAME } from './chars.js';
-import { pigeonFrames, catFrames, dogFrames, carFrames, carType } from './critters.js';
+import { buildWalker, buildStander, buildHead, BOOSTER, NEIGHBOURS, pedestrianSpec, crowdPose, CAST_FRAME as FRAME, pigeonFrames, catFrames, dogFrames } from '../cast/cast.js';
+import { carFrames, carType } from './critters.js';
 
 export const MAIN_H = 268;
 export const G = 192; // building line
@@ -15,7 +15,7 @@ const HOR = 158; // eye level / horizon
 const Z0 = 70; // viewer distance from the building line (perspective strength)
 const ZS = 16; // depth of the buildings on our row
 export const CROSS_W = 150;
-export const PS = 0.68; // people on the street are drawn at 68% of their frame size
+export const PS = 0.44; // people on the street are drawn at 44% of their frame size
 const FW = FRAME.w * PS, FH = FRAME.h * PS, FOX = FRAME.ox * PS, FOY = FRAME.oy * PS;
 const VIEW_H = 285;
 const uiTop = () => (innerWidth > 820 ? 122 : 162);
@@ -88,7 +88,7 @@ export function balloon(lines, R, o = {}) {
 export function createStreet({ cv, stores, itemsByStore, openById, countById, pedItems, boosterItems, onStore, onBooster, onPedestrian, onHover }) {
   const { segs, width: W } = buildLayout(stores);
   const R = pickR();
-  const Rc = Math.max(2, Math.ceil(R * PS) + 1);
+  const Rc = Math.max(1.5, R * PS * 1.2);
   const r = rng(77);
   const ctx = cv.getContext('2d');
   const segOf = (id) => segs.find((s) => s.id === id);
@@ -278,7 +278,8 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
   spots.forEach(([sid, ox, y], i) => {
     if (!openById[sid]) return;
     const top = pick(r, tops2);
-    const spec = { ...pedestrianSpec(top, null, pick(r, shoes), r), pose: { left: i % 2 ? 'hips' : 'down', right: i % 3 ? 'down' : 'hips' } };
+    const spec = pedestrianSpec(top, null, pick(r, shoes), r);
+    spec.pose = crowdPose(spec, r);
     loiter.push({ item: top, sp: buildStander(spec, Rc), x: segOf(sid).x + ox, y, t: r() * 8, off: Math.floor(r() * 4), say: balloon([SLANG[sid][i % 2]], R, { size: 5.4, tail: 0.3, tailDir: -2 }) });
   });
   const booster = buildStander(BOOSTER, Rc);
@@ -598,10 +599,10 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     if (peek.w) {
       const [wx, wy, ww, wh] = peek.w;
       const k2 = Math.round((peek.t < 0.3 ? peek.t / 0.3 : peek.t > 2.5 ? Math.max(0, (2.8 - peek.t) / 0.3) : 1) * 3) / 3;
-      const hs = Math.min(ww, wh) / 15;
+      const hs = Math.min(ww, wh) / 15, hc = heads[peek.head];
       ctx.save();
       ctx.beginPath(); ctx.rect(wx - cx, wy + oy, ww, wh); ctx.clip();
-      ctx.drawImage(heads[peek.head], wx - cx + ww / 2 - 15 * hs, wy + oy + wh - 26 * hs * k2 + Math.sin(t * 6) * 0.3, 30 * hs, 30 * hs);
+      ctx.drawImage(hc, wx - cx + ww / 2 - 12 * hs, wy + oy + wh - 20 * hs * k2 + Math.sin(t * 6) * 0.3, 24 * hs, 24 * hs);
       ctx.restore();
     }
     if (laundry && onScreen(laundry.x0, 40)) {
@@ -622,7 +623,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
     }
     // the van's cat + the booster leaning by the open trunk
     if (alleyInfo) {
-      ctx.drawImage(cat[Math.floor(tk / 8) % 2], alleyInfo.cat.x - cx, oy + alleyInfo.cat.y - 2, 20, 16);
+      ctx.drawImage(cat[Math.floor(tk / 8) % 2], alleyInfo.cat.x - cx, oy + alleyInfo.cat.y - 4, 22, 18);
       const b = alleyInfo.booster;
       const near = Math.abs(b.x + 30 - (cx + viewW / 2)) < viewW * 0.35 || hover === 'booster';
       const ph = (tk / 12) % 3.2, beat = Math.floor(tk / 4);
@@ -647,13 +648,13 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, pe
       } })),
       ...peds.map((p) => ({ y: p.y, draw: () => drawFig(p.pause > 0 ? p.sp.idle : p.sp.frames[p.df ?? 0], (p.pause > 0 ? p.x : p.dx ?? p.x) - cx, oy + p.y, p.dir < 0) })),
       ...(dogAt ? [{ y: dogAt.y, draw: () => {
-        ctx.drawImage(dog[Math.floor(tk / 9) % 2], dogAt.x - cx, oy + dogAt.y - 16, 34, 17);
+        ctx.drawImage(dog[Math.floor(tk / 9) % 2], dogAt.x - cx, oy + dogAt.y - 20, 33.6, 22.4);
         for (let i = 0; i < 2; i++) { const zt = (t * 0.5 + i * 0.5) % 1; ctx.globalAlpha = 1 - zt; ctx.drawImage(zzz, dogAt.x + 24 - cx + zt * 6, oy + dogAt.y - 18 - zt * 14, 5 + zt * 3, 5 + zt * 3); }
         ctx.globalAlpha = 1;
       } }] : []),
       ...flocks.flatMap((fl) => fl.birds.map((b, i) => ({ y: 213, draw: () => {
-        if (fl.flying > 0) { const lift = Math.floor((3 - fl.flying) * 12) / 12 * 26; ctx.drawImage(pigeons[2 + ((tk + i) % 2)], fl.x + b.o + lift * 0.8 - cx, oy + 203 - lift - i * 3, 14.4, 11.7); }
-        else ctx.drawImage(pigeons[b.peck], fl.x + b.o - cx, oy + 202, 14.4, 11.7);
+        if (fl.flying > 0) { const lift = Math.floor((3 - fl.flying) * 12) / 12 * 26; ctx.drawImage(pigeons[2 + ((tk + i) % 2)], fl.x + b.o + lift * 0.8 - cx, oy + 202 - lift - i * 3, 14.4, 12); }
+        else ctx.drawImage(pigeons[b.peck], fl.x + b.o - cx, oy + 201, 14.4, 12);
       } }))),
     ].sort((a, b) => a.y - b.y);
     for (const a of actors) a.draw();

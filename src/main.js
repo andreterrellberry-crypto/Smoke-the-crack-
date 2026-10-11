@@ -198,7 +198,7 @@ function storeScene(st) {
     bg: c.bg, actor: c.actor, w: RW, h: RH, focusX: OWNER_X, focusY: 86, bustH: 70, bustFX: 0.24,
     who: st.owner, where: `${st.name} · ${st.from}`, line: st.greeting,
     draw(fr) {
-      drawOwner(rctx, fr);
+      drawOwner(rctx, fr, c.actor.lift);
       rctx.drawImage(c.counter, 0, 0, RW, RH);
     },
   };
@@ -215,7 +215,7 @@ function openScene(scene) {
   room = { ...scene, t: 0 };
   roomCv.width = Math.round(scene.w * RR);
   roomCv.height = Math.round(scene.h * RR);
-  const pc = portrait(scene.actor.idle);
+  const pc = portrait(scene.actor);
   $('#bubble').innerHTML = `<div class="portrait"></div><div><b>${esc(scene.who)}</b><span>${esc(scene.where)}</span><p>“${esc(scene.line)}”</p></div>`;
   $('#bubble .portrait').appendChild(pc);
   renderRoom(0);

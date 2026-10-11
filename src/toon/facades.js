@@ -2,7 +2,7 @@
 // Drawn in world units on the street layer: the building line is y = G, buildings rise toward -y.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, tube, text, measure, clip, dots, shade, pick } from './toon.js';
 import { itemCanvas } from './items.js';
-import { catFrames } from './critters.js';
+import { catFrames } from '../cast/cast.js';
 
 export const SW = 160;
 export const ALLEY_W = 100;
@@ -157,7 +157,7 @@ export const FACADES = {
     display(ctx, x + 8, G - 36, 50, 30, items.slice(0, 2));
     display(ctx, x + 102, G - 36, 50, 30, items.slice(2, 4));
     const cat = catFrames(R)[0];
-    ctx.drawImage(cat, x + 37, G - 20, 20, 16);
+    ctx.drawImage(cat, x + 36, G - 22, 22, 18);
     const d = door(ctx, x + 68, G - 42, 24, 42, '#1f8a4a', { sign: 'OPEN' });
     rect(ctx, x + 64, G - 1, 32, 2, '#bdb6cf', LW * 0.6);
     return { door: d, top: top + 20, roofL: top, roofR: top, wallL: wc, wallR: wc, windows, neon: [{ x: x + 108, y: G - 34, n: neon('OPEN', C.pink, R, { size: 6 }) }] };

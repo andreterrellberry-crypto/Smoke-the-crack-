@@ -2,15 +2,14 @@
 // real stock on the racks, a gag sign or two on the wall.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, clip, rng, pick, shade } from './toon.js';
 import { itemCanvas } from './items.js';
-import { buildStander, OWNERS, BOOSTER, FRAME } from './chars.js';
-import { catFrames } from './critters.js';
+import { buildStander, buildPortrait, shoulderLift, OWNERS, BOOSTER, CAST_FRAME as FRAME, catFrames } from '../cast/cast.js';
 import { neon, vanRear, tag } from './facades.js';
 
 export const RW = 300;
 export const RH = 150;
 export const OWNER_X = 110;
 export const OWNER_FEET = 134;
-export const OS = 1.3; // owners stand larger than life in their own shop
+export const OS = 0.76; // owners stand larger than life in their own shop
 const FLOOR = 118;
 const COUNTER_Y = 104;
 export const roomR = () => Math.max(3, Math.min(6, Math.ceil(Math.max(innerWidth / RW, innerHeight / RH) * (devicePixelRatio || 1))));
@@ -205,15 +204,17 @@ export function buildCounter(store, color, R) {
   oval(ctx, 150, COUNTER_Y - 6.6, 1, 0.8, C.gold, 0.5);
   line(ctx, [[164, COUNTER_Y], [164, COUNTER_Y - 12]], 0.7);
   for (let k = 0; k < 3; k++) rect(ctx, 160.6, COUNTER_Y - 3 - k * 2.6, 7, 2, '#ffffff', 0.4);
-  if (store.id === 'north-america') ctx.drawImage(catFrames(R)[1], 124, COUNTER_Y - 15.4, 20, 16);
+  if (store.id === 'north-america') ctx.drawImage(catFrames(R)[1], 123, COUNTER_Y - 17.4, 22, 18);
   return c;
 }
 
 export function buildOwner(storeId, R) {
-  return buildStander({ ...OWNERS[storeId] }, Math.min(6, Math.ceil(R * OS)));
+  const o = buildStander({ ...OWNERS[storeId] }, Math.min(5, R * OS * 1.15));
+  o.lift = shoulderLift(OWNERS[storeId]) * OS;
+  return o;
 }
-export function drawOwner(ctx, fr) {
-  ctx.drawImage(fr, OWNER_X - FRAME.ox * OS, OWNER_FEET - FRAME.oy * OS, FRAME.w * OS, FRAME.h * OS);
+export function drawOwner(ctx, fr, lift = 0) {
+  ctx.drawImage(fr, OWNER_X - FRAME.ox * OS, OWNER_FEET - lift - FRAME.oy * OS, FRAME.w * OS, FRAME.h * OS);
 }
 export { COUNTER_Y };
 
@@ -238,19 +239,14 @@ export function buildTrunkScene(items, R) {
   return c;
 }
 export function buildTrunkActor(R) {
-  return buildStander(BOOSTER, Math.min(7, Math.ceil(R * 1.7)));
+  return buildStander(BOOSTER, Math.min(6, R * 1.15));
 }
-// The booster leans into frame at 1.7x: head + chest of his figure
+// The booster leans into frame: head + chest of his figure
 export function drawBoosterBust(ctx, fr) {
   const k = fr.width / FRAME.w;
-  ctx.drawImage(fr, 0, 2 * k, 48 * k, 48 * k, -8, 88, 48 * 1.7, 48 * 1.7);
+  ctx.drawImage(fr, 6 * k, 8 * k, 86 * k, 86 * k, -10, 84, 86, 86);
 }
-// head-and-shoulders crop for the dialogue portrait
-export function portrait(fr) {
-  const k = fr.width / FRAME.w;
-  const c = document.createElement('canvas');
-  c.width = Math.round(30 * k);
-  c.height = Math.round(30 * k);
-  c.getContext('2d').drawImage(fr, 9 * k, 4 * k, 30 * k, 30 * k, 0, 0, c.width, c.height);
-  return c;
+// head-and-shoulders portrait for the dialogue box
+export function portrait(actor, R = 4) {
+  return buildPortrait(actor.spec, R);
 }
