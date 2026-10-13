@@ -1,5 +1,5 @@
 import {
-  ITEMS, ALL_ITEMS, BOOSTER_ITEMS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
+  ITEMS, ALL_ITEMS, BOOSTER_ITEMS, AUCTION_LOTS, STORES, STORE_BY_ID, STORE_BY_COUNTRY, LOC_BY_ID,
   itemsForScope, COUNT_BY_COUNTRY, COUNT_BY_STORE, storeOfItem, isOpen,
 } from '../data/inventory.js';
 import { itemImg } from '../toon/items.js';
@@ -7,8 +7,6 @@ import { itemImg } from '../toon/items.js';
 const $ = (s) => document.querySelector(s);
 const money = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const byId = (id) => ALL_ITEMS.find((i) => i.id === id);
-
 const store = {
   get(k, d) {
     try {
@@ -24,7 +22,15 @@ const store = {
   },
 };
 
-export function createMarket({ onGoStore, onGoBooster, onClose }) {
+// auction lots won at the hammer sit in the bag at the price they went for
+const wonPrices = () => store.get('stc-won', {});
+const byId = (id) => {
+  const it = ALL_ITEMS.find((i) => i.id === id);
+  if (it?.auction) { const p = wonPrices()[id]; return p ? { ...it, price: p } : null; }
+  return it;
+};
+
+export function createMarket({ onGoStore, onGoBooster, onGoAuction, onClose, onActivity, renderAuction }) {
   const panel = $('#market');
   const grid = $('#grid');
   const crumbs = $('#crumbs');
@@ -42,6 +48,16 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
   let scope = { level: 'all' };
   let homeStore = null; // the store the shopper is standing in
   let cart = store.get('stc-bag', []).filter((id) => byId(id));
+  // a lot won at the hammer goes straight into the bag at its hammer price
+  function addWon(lot, price) {
+    store.set('stc-won', { ...wonPrices(), [lot.id]: price });
+    if (!cart.includes(lot.id)) cart.push(lot.id);
+    store.set('stc-bag', cart);
+    renderBag();
+    bagBtn.classList.remove('bump');
+    void bagBtn.offsetWidth;
+    bagBtn.classList.add('bump');
+  }
 
   function showToast(msg) {
     toast.textContent = msg;
@@ -66,9 +82,9 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
     const where = it.booster ? it.origin : `${loc.city}, ${loc.country}`;
     const st = it.booster ? null : storeOfItem(it);
     return `<article class="card">
-      <div class="art">${itemImg(it)}<span class="cond">${esc(it.condition)}</span>${it.booster ? `<span class="badge">${esc(it.rarity.toUpperCase())}</span>` : ''}</div>
+      <div class="art">${itemImg(it)}<span class="cond">${esc(it.condition)}</span>${it.booster ? `<span class="badge off">−${it.off}%</span>` : ''}</div>
       <div class="body">
-        <div class="row"><span class="brand">${esc(it.brand)}</span><span class="price">${money(it.price)}</span></div>
+        <div class="row"><span class="brand">${esc(it.brand)}</span>${it.booster ? `<s class="was">${money(it.retail)}</s>` : ''}<span class="price">${money(it.price)}</span></div>
         <h3>${esc(it.name)}</h3>
         <p class="where">📍 ${esc(where)}</p>
         <p class="facts"><b>${it.year}</b> · ${esc(it.collection)} · by ${esc(it.designer)}</p>
@@ -81,19 +97,25 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
 
   function wireGrid() {
     grid.querySelectorAll('.add').forEach((b) => (b.onclick = () => toggleCart(b.dataset.id)));
+    grid.querySelectorAll('.card').forEach((c) => c.addEventListener('pointerenter', () => onActivity?.('look', byId(c.querySelector('.add')?.dataset.id))));
     grid.querySelectorAll('.goto').forEach((b) => (b.onclick = () => onGoStore(b.dataset.store)));
   }
 
   function render() {
     panel.classList.toggle('booster', scope.level === 'booster');
+    panel.classList.toggle('auction', scope.level === 'auction');
     chipsHost.innerHTML = '';
+    if (scope.level === 'auction') {
+      renderAuction({ crumbs, title, meta, grid });
+      return;
+    }
 
     if (scope.level === 'booster') {
       const prices = BOOSTER_ITEMS.map((i) => i.price);
       crumbs.innerHTML = `<span class="crumb on">Booster Corner</span><span class="sep">›</span><span class="crumb">Back of the van</span>`;
       title.textContent = 'Booster Corner';
-      meta.textContent = `${BOOSTER_ITEMS.length} rare pieces · ${money(Math.min(...prices))} to ${money(Math.max(...prices))} · when they’re gone, they’re gone`;
-      grid.innerHTML = `<p class="section-h">“Ain’t nobody got these.”</p>` + sortItems(BOOSTER_ITEMS).map((it) => card(it)).join('');
+      meta.textContent = `${BOOSTER_ITEMS.length} pieces · half off or less · ${money(Math.min(...prices))} to ${money(Math.max(...prices))} · not sold anywhere else`;
+      grid.innerHTML = `<p class="section-h">“Ain’t nobody got these. Half price. Don’t ask.”</p>` + sortItems(BOOSTER_ITEMS).map((it) => card(it)).join('');
       wireGrid();
       grid.scrollTop = 0;
       return;
@@ -149,10 +171,12 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
     const it = byId(id);
     if (cart.includes(id)) {
       cart = cart.filter((c) => c !== id);
+      if (it.auction) { const w = wonPrices(); delete w[id]; store.set('stc-won', w); }
       showToast(`Removed ${it.name}`);
     } else {
       cart.push(id);
-      showToast(it.booster ? `Out the trunk and in your bag: ${it.name}.` : `Added ${it.brand} — ${it.name}`);
+      showToast(it.booster ? `Out the trunk and in your bag: ${it.name}, ${money(it.price)}.` : `Added ${it.brand} — ${it.name}`);
+      onActivity?.('add', it);
       bagBtn.classList.remove('bump');
       void bagBtn.offsetWidth;
       bagBtn.classList.add('bump');
@@ -173,7 +197,7 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
     bagList.innerHTML = items.length
       ? items
           .map((it) => {
-            const where = it.booster ? `Booster Corner · back of the van` : `${LOC_BY_ID[it.locId].city}, ${LOC_BY_ID[it.locId].country}`;
+            const where = it.booster ? `Booster Corner · back of the van` : it.auction ? `Won at the Hammerdome · Lot ${it.lot}` : `${LOC_BY_ID[it.locId].city}, ${LOC_BY_ID[it.locId].country}`;
             return `<li><div class="mini">${itemImg(it)}</div><div><b>${esc(it.brand)}</b><br>${esc(it.name)}<br><small>${esc(where)} · ${it.year}</small></div><div class="r">${money(it.price)}<button data-id="${it.id}" aria-label="Remove">✕</button></div></li>`;
           })
           .join('')
@@ -195,7 +219,8 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
     for (const st of STORES)
       if (!q || `${st.name} ${st.region} ${st.owner}`.toLowerCase().includes(q))
         add(st.id, { store: st.id, label: st.name, sub: `${st.region} · ${isOpen(st) ? `${COUNT_BY_STORE[st.id]} pieces` : 'Under construction'}` });
-    if (!q || 'booster corner van trunk rare'.includes(q) || q.includes('booster') || q.includes('rare')) add('booster', { booster: true, label: 'Booster Corner', sub: `Back of the van · ${BOOSTER_ITEMS.length} rare pieces` });
+    if (!q || 'booster corner van trunk deals half off discount cheap'.includes(q) || /booster|deal|cheap|off|sale/.test(q)) add('booster', { booster: true, label: 'Booster Corner', sub: `Back of the van · ${BOOSTER_ITEMS.length} pieces, half off or less` });
+    if (!q || 'hammerdome auction hall live bid lots'.includes(q) || /auction|bid|lot|hammer/.test(q)) add('auction', { auction: true, label: 'Hammerdome Auction Hall', sub: `Live bidding · ${AUCTION_LOTS.length} lots you won't find anywhere else` });
     if (q) {
       for (const c of Object.keys(STORE_BY_COUNTRY))
         if (c.toLowerCase().includes(q)) add(`c-${c}`, { store: STORE_BY_COUNTRY[c].id, country: COUNT_BY_COUNTRY[c] ? c : null, label: c, sub: `${STORE_BY_COUNTRY[c].name} · ${COUNT_BY_COUNTRY[c] || 0} pieces` });
@@ -215,7 +240,7 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
           const r = out[+b.dataset.i];
           results.classList.remove('show');
           search.blur();
-          r.booster ? onGoBooster() : onGoStore(r.store, r.country);
+          r.booster ? onGoBooster() : r.auction ? onGoAuction() : onGoStore(r.store, r.country);
         })
     );
   }
@@ -242,6 +267,9 @@ export function createMarket({ onGoStore, onGoBooster, onClose }) {
     close,
     showToast,
     toggleCart,
+    addWon,
+    isWon: (id) => !!wonPrices()[id],
+    refresh() { if (panel.classList.contains('open')) render(); },
     inBag: (id) => cart.includes(id),
     isOpen: () => panel.classList.contains('open'),
     get scope() {

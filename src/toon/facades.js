@@ -435,6 +435,85 @@ export function paintBoosterCorner(ctx, x, G, r, items, R) {
   };
 }
 
+// ---------- Hammerdome Auction Hall: marble columns, a gold dome, red carpet out to the curb ----------
+export const AUC_W = 210;
+export function paintAuctionHouse(ctx, x, G, r, R) {
+  const W = AUC_W, marble = '#f3ead8', vein = '#d8ccb2', red = '#9a1830', top = G - 104;
+  // gold dome and lantern behind the pediment, flag on top
+  const cx = x + W / 2;
+  ctx.beginPath(); ctx.ellipse(cx, top - 30, 44, 34, 0, Math.PI, Math.PI * 2); ctx.closePath();
+  ctx.fillStyle = C.gold; ctx.fill(); ctx.lineWidth = LW; ctx.strokeStyle = K; ctx.stroke();
+  for (const k of [-0.62, -0.25, 0.25, 0.62]) line(ctx, [[cx + k * 44, top - 30], [cx + k * 30, top - 52], [cx, top - 64]], 0.6, C.gold2, true);
+  ctx.beginPath(); ctx.ellipse(cx - 18, top - 46, 9, 6, -0.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fill();
+  rect(ctx, cx - 6, top - 74, 12, 11, marble, LW);
+  oval(ctx, cx, top - 76, 7, 3.4, C.gold, LW);
+  line(ctx, [[cx, top - 79], [cx, top - 100]], 1);
+  poly(ctx, [[cx, top - 100], [cx + 16, top - 96], [cx, top - 91]], C.red, LW * 0.8);
+  text(ctx, 'H', cx + 6, top - 95.6, { size: 4.2, font: FONT.slab, fill: '#ffffff' });
+  // main block
+  rect(ctx, x, top, W, 104, marble, LW);
+  ctx.lineWidth = 0.4; ctx.strokeStyle = vein;
+  for (let i = 0; i < 12; i++) { const vx = x + 6 + r() * (W - 12), vy = top + 14 + r() * 80; ctx.beginPath(); ctx.moveTo(vx, vy); ctx.quadraticCurveTo(vx + 6, vy + 3, vx + 10, vy - 2); ctx.stroke(); }
+  // pediment with the gavel crest
+  poly(ctx, [[x - 6, top + 2], [cx, top - 30], [x + W + 6, top + 2]], marble, LW);
+  poly(ctx, [[x + 10, top - 1], [cx, top - 24], [x + W - 10, top - 1]], '#efe2c8', LW * 0.7);
+  ctx.save(); ctx.translate(cx, top - 10); ctx.rotate(-0.5);
+  rrect(ctx, -9, -3.4, 18, 6.8, 1.6, '#8a4a22', LW * 0.8); rect(ctx, -2, -3.6, 4, 7.2, C.gold, 0.5); rect(ctx, -1, 3, 2, 14, '#8a4a22', LW * 0.7);
+  ctx.restore();
+  // frieze with the name
+  rect(ctx, x - 4, top + 2, W + 8, 16, red, LW);
+  rect(ctx, x - 4, top + 2, W + 8, 2, C.gold, 0.5); rect(ctx, x - 4, top + 16, W + 8, 2, C.gold, 0.5);
+  text(ctx, 'HAMMERDOME', cx, top + 10.6, { size: 11.5, font: FONT.slab, fill: C.gold, stroke: K, sw: 0.9, extrude: '#5a0c1a', depth: 1 });
+  // colonnade
+  const cols = [x + 14, x + 40, x + 66, x + W - 76, x + W - 50, x + W - 24];
+  for (const px of cols) {
+    rect(ctx, px - 6, top + 18, 12, 4, marble, LW * 0.8);
+    rect(ctx, px - 4.4, top + 22, 8.8, 70, '#fbf6ea', LW);
+    for (const fx of [-2, 0, 2]) line(ctx, [[px + fx, top + 24], [px + fx, top + 90]], 0.4, vein);
+    rect(ctx, px - 6, top + 90, 12, 4, marble, LW * 0.8);
+  }
+  // banners between the outer columns
+  for (const [bx, w1, w2] of [[x + 21, 'LIVE', 'BIDS'], [x + W - 43, 'ONE', 'OFFS']]) {
+    rect(ctx, bx, top + 26, 13, 34, red, LW);
+    poly(ctx, [[bx, top + 60], [bx + 6.5, top + 55], [bx + 13, top + 60], [bx + 13, top + 64], [bx + 6.5, top + 59], [bx, top + 64]], red, LW * 0.8);
+    text(ctx, w1, bx + 6.5, top + 36, { size: 3.6, font: FONT.slab, fill: C.gold });
+    text(ctx, w2, bx + 6.5, top + 44, { size: 3.6, font: FONT.slab, fill: C.gold });
+    oval(ctx, bx + 6.5, top + 52, 2.6, 2.6, C.gold, 0.5);
+  }
+  // marquee frame round the live ticker, bulbs drawn live by the street
+  const tk = { x: cx - 46, y: G - 82, w: 92, h: 15 };
+  rrect(ctx, tk.x - 5, tk.y - 5, tk.w + 10, tk.h + 10, 2, red, LW);
+  rect(ctx, tk.x, tk.y, tk.w, tk.h, '#120c10', LW * 0.8);
+  const bulbs = [];
+  for (let i = 0; i <= 14; i++) { const bx = tk.x - 2.6 + (i * (tk.w + 5.2)) / 14; bulbs.push([bx, tk.y - 2.6], [bx, tk.y + tk.h + 2.6]); }
+  // the doors: tall gold double doors under a lit transom
+  const d = { x: cx - 16, y: G - 50, w: 32, h: 50 };
+  rect(ctx, d.x - 3, d.y - 3, d.w + 6, d.h + 3, '#5a2c14', LW);
+  rect(ctx, d.x, d.y, d.w, d.h, C.gold, LW);
+  rect(ctx, d.x, d.y, d.w, 8, C.winLit, LW * 0.8);
+  line(ctx, [[cx, d.y + 8], [cx, G]], LW);
+  for (const px of [d.x + 3, cx + 3]) { rrect(ctx, px, d.y + 12, 10, 16, 1, '#e8a812', LW * 0.6); rrect(ctx, px, d.y + 31, 10, 15, 1, '#e8a812', LW * 0.6); }
+  oval(ctx, cx - 3, d.y + 30, 1.1, 1.1, '#fff3a0', 0.5); oval(ctx, cx + 3, d.y + 30, 1.1, 1.1, '#fff3a0', 0.5);
+  // steps
+  for (let k = 0; k < 3; k++) rect(ctx, x + 4 + k * 6, G - 6 + k * 2, W - 8 - k * 12, 2, '#e6dcc4', LW * 0.6);
+  // red carpet out to the curb, velvet ropes, potted topiaries
+  poly(ctx, [[cx - 14, G], [cx + 14, G], [cx + 18, G + 23], [cx - 18, G + 23]], '#c8102e', LW * 0.8);
+  line(ctx, [[cx - 12, G + 1], [cx - 15.6, G + 22]], 0.6, C.gold); line(ctx, [[cx + 12, G + 1], [cx + 15.6, G + 22]], 0.6, C.gold);
+  for (const s of [-1, 1]) {
+    const px = [cx + s * 22, cx + s * 30, cx + s * 38];
+    for (const p of px) { rect(ctx, p - 0.8, G + 6, 1.6, 12, C.gold, 0.5); oval(ctx, p, G + 5.6, 1.6, 1.6, C.gold, 0.5); rect(ctx, p - 2, G + 17.4, 4, 1.4, C.gold2, 0.4); }
+    for (let k = 0; k < 2; k++) line(ctx, [[px[k], G + 7], [(px[k] + px[k + 1]) / 2, G + 10.6], [px[k + 1], G + 7]], 1, '#9a1830', true);
+    const tx = cx + s * 54;
+    rect(ctx, tx - 4, G - 10, 8, 10, '#8a4a22', LW * 0.8);
+    oval(ctx, tx, G - 18, 6, 8, C.green, LW); oval(ctx, tx - 2, G - 21, 2.4, 2, C.lime, 0);
+  }
+  return {
+    door: d, top: top - 34, roofL: top, roofR: top, wallL: marble, wallR: marble,
+    ticker: tk, bulbs,
+    neon: [{ x: x + 4, y: G - 34, n: neon('LIVE', C.red, R, { size: 6, bg: '#1d1a22' }) }],
+  };
+}
+
 // ---------- street furniture (each drawn into its own sprite) ----------
 export function lampPost(ctx, x, curb) {
   rect(ctx, x, curb - 96, 2.6, 96, '#2e6b4a', LW * 0.8);

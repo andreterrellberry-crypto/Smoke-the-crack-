@@ -204,21 +204,21 @@ export const COUNT_BY_STORE = Object.fromEntries(STORES.map((s) => [s.id, itemsF
 // No stock → the storefront is boarded up and can't be entered
 export const isOpen = (store) => COUNT_BY_STORE[store.id] > 0;
 
-// ---------- Booster Corner: rare pieces out the back of a van. Cheap finds and five-figure grails. ----------
-// [name, brand, type, price, size, condition, year, collection, designer, origin, blurb, primary, accent, rarity]
+// ---------- Booster Corner: half off or less, out the back of a van. None of it is sold anywhere else on the block. ----------
+// [name, brand, type, retail, price, size, condition, year, collection, designer, origin, blurb, primary, accent]
 const BOOSTER_RAW = [
-  ['Cemetery Cross Leather Jacket', 'Chrome Hearts', 'jacket', 16500, 'L', 'Private Order', 2008, 'Made to order', 'Richard Stark', 'Hollywood, USA', 'Sterling cross hardware on buttery cowhide. Never hit a shop floor.', '#141414', '#d9d9d9', '1 of 1'],
-  ['Air Jordan 1 High “Bred”', 'Nike', 'sneaker', 14200, 'US 10.5', 'Deadstock in box', 1985, 'Original Release', 'Peter Moore', 'Beaverton, USA', 'Original box, original paper. Don’t ask where they came from.', '#111111', '#c8102e', 'OG box'],
-  ['Gold Camo Shark Hoodie (Sample)', 'A Bathing Ape', 'hoodie', 6800, 'L', 'Sample – Unworn', 2006, 'Showroom sample', 'Nigo', 'Tokyo, Japan', 'Showroom sample that never went to production.', '#b8912f', '#111111', 'Sample'],
-  ['One-of-One Boro Kimono Coat', 'Kapital', 'coat', 5400, 'OS', 'New', 2019, 'Atelier piece', 'Kazuhiro Hiraki', 'Kojima, Japan', 'Hand-patched from century-old indigo scraps. Only one exists.', '#1f3a5f', '#e9dfc9', '1 of 1'],
-  ['Pirate Boots', 'Vivienne Westwood', 'sneaker', 4900, 'UK 9', 'Archive – Excellent', 1981, '“Pirate” collection', 'Vivienne Westwood & Malcolm McLaren', 'London, UK', 'From the collection that launched a movement on the King’s Road.', '#5a3a1e', '#d4af37', 'Archive'],
-  ['Hand-Painted Gull Denim Jacket', 'Evisu', 'jacket', 3900, 'M', 'Vintage – Excellent', 1995, 'Early Osaka run', 'Hidehiko Yamane', 'Osaka, Japan', 'Gulls painted by hand on the back. Early Osaka-era piece.', '#203550', '#ffffff', 'Hand-painted'],
-  ['Mismatched Sample Pair', 'Nike', 'sneaker', 120, 'US 9', 'Sample – Worn once', 2009, 'Factory sample', 'Unknown', 'Guangdong, China', 'Left and right in different colourways. Came out the back of a factory.', '#f4f4f4', '#2a5ea8', 'Sample'],
-  ['Pirate Radio Promo Hoodie', 'Unknown', 'hoodie', 60, 'XL', 'Vintage – Good', 1994, 'Station promo', 'Station crew', 'London, UK', 'Made for one jungle station’s crew. Only about 50 printed.', '#1a1a1a', '#f4c430', '1 of 50'],
-  ['Olympic Volunteer Staff Tee', 'Vintage', 'tee', 45, 'L', 'Vintage – Good', 1996, 'Staff issue', 'Unknown', 'Atlanta, USA', 'Staff-only issue, never sold to the public.', '#f2f2f2', '#0a3d91', 'Staff only'],
-  ['Single-Stitch Bootleg Rap Tee', 'Bootleg', 'tee', 38, 'XL', 'Vintage – Faded', 1993, 'Flea market', 'Unknown', 'Brooklyn, USA', 'Off-register print, single-stitch hem. Every one came out different.', '#2a2a2a', '#c8102e', 'Bootleg'],
-  ['Canal Street Monogram Bucket Hat', 'Bootleg', 'cap', 25, 'OS', 'Used – Good', 2002, 'Canal Street', 'Unknown', 'New York City, USA', 'An original Canal Street bootleg. Now rarer than the real thing.', '#7a5a2e', '#e8c86a', 'Bootleg'],
-  ['Konbini Collab Tee', 'Unknown', 'tee', 30, 'M', 'New w/ Tags', 2008, 'Japan-only', 'Unknown', 'Tokyo, Japan', 'Sold at one convenience-store chain for a week, then gone.', '#f4f4f4', '#2fa84f', 'Japan only'],
+  ['Air Max 95 “Neon”', 'Nike', 'sneaker', 380, 150, 'US 10', 'New – Box damaged', 2018, 'Retro', 'Sergio Lozano', 'Portland, USA', 'Fell off a pallet. The box is crushed, the shoes are perfect.', '#5a5a5a', '#c6f000'],
+  ['Nuptse 1996 Retro Jacket', 'The North Face', 'coat', 330, 140, 'L', 'New – No tags', 2021, 'Icons', 'TNF Design', 'Montréal, Canada', 'Still smells like the warehouse. Tags walked off on their own.', '#111111', '#f4c430'],
+  ['Tech Fleece Full-Zip Hoodie', 'Nike', 'hoodie', 140, 55, 'M', 'New w/ Tags', 2023, 'Tech Fleece', 'Nike Sportswear', 'Brooklyn, USA', 'Ten of these came in a bag marked “GYM”. Nine left.', '#3a3f4a', '#c6c2d4'],
+  ['Detroit Jacket', 'Carhartt WIP', 'jacket', 260, 110, 'L', 'Used – Like New', 2022, 'Workwear', 'Carhartt WIP', 'Detroit, USA', 'Worn once to a job site. Not his job site.', '#a0662a', '#3a2a1a'],
+  ['Dunk Low “Panda”', 'Nike', 'sneaker', 220, 85, 'US 9', 'New – Deadstock', 2022, 'Dunk', 'Peter Moore', 'Shenzhen, China', 'Real pair, factory overrun. Stop asking how.', '#111111', '#f5f5f5'],
+  ['990v3 “Made in USA”', 'New Balance', 'sneaker', 210, 90, 'US 11', 'Used – Excellent', 2020, 'Made in USA', 'New Balance', 'Boston, USA', 'Dad shoe energy at half the dad price.', '#9aa0a8', '#2a3f6a'],
+  ['Essentials Hoodie', 'Fear of God Essentials', 'hoodie', 120, 45, 'XL', 'New w/ Tags', 2023, 'Essentials', 'Jerry Lorenzo', 'Los Angeles, USA', 'A whole box. Somebody’s inventory count is off.', '#d8cbb4', '#1a1a1a'],
+  ['Woven Cargo Pants', 'Nike ACG', 'pants', 160, 60, '32', 'New w/ Tags', 2022, 'All Conditions Gear', 'Nike ACG', 'Portland, USA', 'Trail-ready. Never seen a trail.', '#3d4a3a', '#ff7a00'],
+  ['Argentina 1994 Away Jersey (Factory Second)', 'Adidas', 'jersey', 140, 40, 'L', 'New – Misprinted', 1994, 'World Cup ’94', 'Adidas', 'Buenos Aires, Argentina', 'Crest stitched a little crooked. Wear it anyway.', '#1d2a6b', '#ffffff'],
+  ['Bermuda Bucket Hat', 'Kangol', 'cap', 60, 22, 'M', 'New w/ Tags', 2021, 'Bermuda', 'Kangol', 'London, UK', 'Came in a crate with forty others. Pick your fighter.', '#e8202a', '#111111'],
+  ['Polo Bear Knit Sweater', 'Ralph Lauren', 'shirt', 420, 160, 'M', 'Used – Excellent', 2019, 'Polo Bear', 'Ralph Lauren', 'New York City, USA', 'From a Greenwich estate sale. The bear’s still smiling.', '#f2ede0', '#7a1f2b'],
+  ['Champion Reverse Weave Crewneck', 'Champion', 'tee', 90, 30, 'XL', 'Vintage – Good', 1996, 'Reverse Weave', 'Champion', 'Rochester, USA', 'Thrift-bin rescue. Cuffs still tight.', '#7a8aa8', '#e8202a'],
 ];
 export const BOOSTER_ITEMS = BOOSTER_RAW.map((r, i) => ({
   id: `boost-${i}`,
@@ -226,16 +226,52 @@ export const BOOSTER_ITEMS = BOOSTER_RAW.map((r, i) => ({
   name: r[0],
   brand: r[1],
   type: r[2],
-  price: r[3],
-  size: r[4],
-  condition: r[5],
-  year: r[6],
-  collection: r[7],
-  designer: r[8],
-  origin: r[9],
-  blurb: r[10],
-  color: r[11],
-  accent: r[12],
-  rarity: r[13],
+  retail: r[3],
+  price: r[4],
+  off: Math.round((1 - r[4] / r[3]) * 100),
+  size: r[5],
+  condition: r[6],
+  year: r[7],
+  collection: r[8],
+  designer: r[9],
+  origin: r[10],
+  blurb: r[11],
+  color: r[12],
+  accent: r[13],
 }));
-export const ALL_ITEMS = [...ITEMS, ...BOOSTER_ITEMS];
+
+// ---------- Hammerdome Auction Hall: live lots, none of them sold anywhere else on the block ----------
+// [name, brand, type, estimate low, estimate high, opening bid, size, condition, year, collection, designer, provenance, blurb, primary, accent]
+const AUCTION_RAW = [
+  ['Air Mag “Back to the Future”', 'Nike', 'sneaker', 45000, 70000, 20000, 'US 10', 'Deadstock, charger included', 2016, 'Charity draw', 'Tinker Hatfield', 'Beaverton, USA', 'Power laces. One of 89 pairs ever made, never plugged in.', '#c8ccd4', '#3fb7ff'],
+  ['Air Jordan 1 “The Ten” Sample', 'Off-White × Nike', 'sneaker', 12000, 20000, 6000, 'US 9', 'Sample – Unworn', 2017, 'The Ten', 'Virgil Abloh', 'Chicago, USA', 'Pre-release sample with SAMPLE stamped on the tongue.', '#f2f2f2', '#f05a28'],
+  ['Astro Biker Jacket', 'Helmut Lang', 'jacket', 9000, 14000, 4000, '48', 'Archive – Excellent', 1999, 'AW99', 'Helmut Lang', 'Vienna, Austria', 'The bondage-strap biker that every archive collector hunts.', '#1a1a1a', '#e5e5e5'],
+  ['Virginia Creeper Parka', 'Raf Simons', 'coat', 15000, 25000, 7000, '48', 'Archive – Good', 2002, 'AW02 Virginia Creeper', 'Raf Simons', 'Antwerp, Belgium', 'Patched and painted parka from the darkest Raf season.', '#2e3428', '#c94a2a'],
+  ['Chomper Shark Hoodie', 'A Bathing Ape × KAWS', 'hoodie', 3000, 5000, 1200, 'L', 'Used – Excellent', 2005, 'KAWS collab', 'Nigo × KAWS', 'Tokyo, Japan', 'The KAWS Chomper face on the full-zip. Ura-Harajuku royalty.', '#2f6fde', '#111111'],
+  ['1997 Tour Tee', 'Wu-Tang Clan', 'tee', 1500, 2500, 400, 'XL', 'Vintage – Faded', 1997, 'Forever tour', 'Tour merch', 'Staten Island, USA', 'Bought at the show, slept in for a decade. Single-stitch.', '#141414', '#f4c430'],
+  ['Dream Team Warm-Up Jacket', 'Champion', 'jacket', 8000, 12000, 3000, 'XL', 'Bench-worn', 1992, 'Barcelona Olympics', 'Champion', 'Barcelona, Spain', 'Worn on the bench in Barcelona. Letter of authenticity included.', '#1d3f9f', '#e8202a'],
+  ['Lot 501XX “Big E”', 'Levi’s', 'pants', 20000, 35000, 9000, '32', 'Vintage – Repaired', 1947, 'Big E', 'Levi Strauss & Co.', 'San Francisco, USA', 'Pulled out of a Nevada mine shaft. Hand-darned by the original owner.', '#2a3f6a', '#c8902a'],
+  ['Air Jordan 1 High “Dior”', 'Dior × Nike', 'sneaker', 9000, 14000, 5000, 'US 10', 'New – Deadstock', 2020, 'Air Dior', 'Kim Jones', 'Paris, France', 'One of 8,500. Italian-made, Oblique swoosh, never laced.', '#d8d8dc', '#7a9ac8'],
+];
+export const AUCTION_LOTS = AUCTION_RAW.map((r, i) => ({
+  id: `lot-${i}`,
+  lot: i + 1,
+  auction: true,
+  name: r[0],
+  brand: r[1],
+  type: r[2],
+  estLow: r[3],
+  estHigh: r[4],
+  start: r[5],
+  price: r[5],
+  size: r[6],
+  condition: r[7],
+  year: r[8],
+  collection: r[9],
+  designer: r[10],
+  origin: r[11],
+  blurb: r[12],
+  color: r[13],
+  accent: r[14],
+}));
+export const ALL_ITEMS = [...ITEMS, ...BOOSTER_ITEMS, ...AUCTION_LOTS];

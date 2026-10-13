@@ -1,7 +1,7 @@
 // The block as a cartoon set: tiled pre-rendered layers, a live one-point-perspective pass (building side walls and
 // cross streets that swing toward the vanishing point as you walk) and a live layer of people, traffic and gags.
 import { K, C, LW, FONT, layer, rect, rrect, oval, poly, blob, line, text, measure, dots, rng, pick, shade } from './toon.js';
-import { FACADES, SW, ALLEY_W, construction, paintBoosterCorner, lampPost, hydrant, trashCan, newsBox, mailbox, meter, bench, pole, signalPole } from './facades.js';
+import { FACADES, SW, ALLEY_W, AUC_W, paintAuctionHouse, construction, paintBoosterCorner, lampPost, hydrant, trashCan, newsBox, mailbox, meter, bench, pole, signalPole } from './facades.js';
 import { pigeonFrames, catFrames, dogFrames } from '../cast/animals.js';
 import { drawPuppet, puppet, castPx, LIGHT } from '../cast/puppet.js';
 import { carFrames, carType } from './critters.js';
@@ -31,6 +31,9 @@ export function buildLayout(stores) {
     x += SW;
     if (s.id === 'south-america') { segs.push({ kind: 'alley', id: 'booster', x, w: ALLEY_W }); x += ALLEY_W; }
   }
+  // the Hammerdome closes out the block where Antarctica used to be
+  segs.push({ kind: 'auction', id: 'auction', x, w: AUC_W });
+  x += AUC_W;
   segs.push({ kind: 'cross', x, w: CROSS_W, end: true, street: 'GRAIL AVE' });
   return { segs, width: x + CROSS_W };
 }
@@ -82,7 +85,7 @@ export function balloon(lines, R, o = {}) {
   });
 }
 
-export function createStreet({ cv, stores, itemsByStore, openById, countById, boosterItems, onStore, onBooster, onHover }) {
+export function createStreet({ cv, stores, itemsByStore, openById, countById, boosterItems, auction, onStore, onBooster, onAuction, onHover }) {
   const { segs, width: W } = buildLayout(stores);
   const R = pickR();
   const r = rng(77);
@@ -124,6 +127,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
       } else {
         sidewalk(m, rr, seg.x, seg.x + seg.w);
         if (seg.kind === 'alley') res = paintBoosterCorner(m, seg.x, G, rr, boosterItems, R);
+        else if (seg.kind === 'auction') res = paintAuctionHouse(m, seg.x, G, rr, R);
         else {
           const st = stores.find((s) => s.id === seg.id);
           res = FACADES[st.id](m, seg.x, G, rr, itemsByStore[st.id], R);
@@ -146,11 +150,12 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
   const main = tiled(W, MAIN_H, R, painters);
   const doors = {}, tops = {}, neon = [];
   const fx = { steam: [], smoke: [] };
-  let alleyInfo = null, laundry = null;
+  let alleyInfo = null, auctionInfo = null, laundry = null;
   segs.forEach((seg, i) => {
     const res = info[i];
     seg.roofL = res.roofL; seg.roofR = res.roofR; seg.wallL = res.wallL; seg.wallR = res.wallR;
     if (seg.kind === 'alley') { alleyInfo = res; neon.push(...res.neon); fx.steam.push({ ...res.steam, p: [] }); }
+    else if (seg.kind === 'auction') { auctionInfo = res; doors.auction = res.door; tops.auction = res.top; neon.push(...res.neon); }
     else if (seg.kind === 'store') {
       doors[seg.id] = res.door;
       tops[seg.id] = res.top;
@@ -189,6 +194,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
   const hydS = sprite(14, 17, R, (x) => hydrant(x, 3, 16.6));
   const canS = [0, 1].map((k) => sprite(15, 19, R, (x, rr) => trashCan(x, 1.6, 18.6, rr), 40 + k));
   segs.forEach((seg, i) => {
+    if (seg.kind === 'auction') { fg.push({ c: lampS, x: seg.x - 4, y: CURB - 103 }, { c: lampS, x: seg.x + seg.w - 22, y: CURB - 103 }); return; }
     if (seg.kind !== 'store') return;
     if (segs[i - 1]?.kind === 'store') fg.push({ c: lampS, x: seg.x - 4, y: CURB - 103 });
     fg.push(i % 2 ? { c: hydS, x: seg.x + 20, y: CURB - 16.6 } : { c: canS[i % 4 ? 0 : 1], x: seg.x + 18, y: CURB - 18.6 });
@@ -261,6 +267,8 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
 
   // ---------- characters: owners work inside their shops; the booster works the van ----------
   const booster = puppet('booster');
+  // the booster runs his own corner: leans on the van, paces the sidewalk, keeps lookout, hustles anyone who walks up
+  const bst = alleyInfo ? { x: alleyInfo.booster.x, home: alleyInfo.booster.x, dir: 1, act: 'lean', until: 2.5, target: 0, phase: 0, flip: false } : null;
   const pigeons = pigeonFrames(R);
   const cat = catFrames(R);
   const dog = dogFrames(R);
@@ -272,7 +280,8 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     ? pill(hover ? `${st.region.toUpperCase()}  › WALK IN` : st.region.toUpperCase(), countById[st.id], hover ? C.yellow : '#ffffff', K, R)
     : pill(`${st.region.toUpperCase()} • CLOSED`, null, C.orange, K, R);
   const tags = Object.fromEntries(stores.map((s) => [s.id, { n: tagCanvas(s, false), h: tagCanvas(s, true) }]));
-  const bTags = { n: pill('BOOSTER CORNER', 'RARE', '#2a2f6b', C.gold, R), h: pill('BOOSTER CORNER › THE TRUNK', null, C.gold, K, R) };
+  const bTags = { n: pill('BOOSTER CORNER', '−50%', '#2a2f6b', C.gold, R), h: pill('BOOSTER CORNER › HALF OFF', null, C.gold, K, R) };
+  const aTags = { n: pill('HAMMERDOME AUCTIONS', 'LIVE', '#9a1830', C.gold, R), h: pill('AUCTION HALL › BID LIVE', null, C.gold, K, R) };
   const bubble = balloon(["AIN'T NOBODY", 'GOT THESE.'], R, { size: 6.6, colors: [K, C.gold], tail: 0.82 });
   const zzz = sprite(8, 8, R, (x) => text(x, 'Z', 4, 4, { size: 7, font: FONT.block, fill: '#ffffff', stroke: K, sw: 1 }));
 
@@ -322,6 +331,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     for (const seg of segs) {
       if (x < seg.x || x >= seg.x + seg.w || y > G + 4) continue;
       if (seg.kind === 'alley') return { booster: true };
+      if (seg.kind === 'auction' && y > tops.auction - 14) return { auction: true };
       if (seg.kind === 'store' && y > tops[seg.id] - 14) return { store: seg.id };
     }
     return null;
@@ -342,7 +352,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     } else if (e.target === cv) {
       const h = hitTest(e.clientX, e.clientY);
       cv.style.cursor = h ? 'pointer' : 'grab';
-      hover = h?.store || (h?.booster ? 'booster' : null);
+      hover = h?.store || (h?.booster ? 'booster' : h?.auction ? 'auction' : null);
       onHover?.(h, e.clientX, e.clientY);
     }
   });
@@ -355,6 +365,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     const h = hitTest(e.clientX, e.clientY);
     if (!h) return;
     if (h.booster) onBooster();
+    else if (h.auction) onAuction();
     else onStore(h.store);
   });
   cv.addEventListener('wheel', (e) => {
@@ -380,6 +391,27 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     for (const p of src.p) { p.life += dt; p.y -= dt * rise; p.x += Math.sin(p.life * 2.4 + p.s * 9) * dt * 4; }
     src.p = src.p.filter((p) => p.life < life);
   }
+  function boosterBrain(dt) {
+    const seg = segs.find((x) => x.kind === 'alley');
+    const near = Math.abs(bst.home + 30 - (camX + viewW / 2)) < viewW * 0.22 || hover === 'booster';
+    const go = (x) => { bst.act = 'walk'; bst.target = Math.max(seg.x - 46, Math.min(seg.x + seg.w + 34, x)); bst.dir = bst.target > bst.x ? 1 : -1; };
+    if (near && bst.act !== 'hustle' && !(bst.act === 'walk' && bst.target === bst.home)) { if (Math.abs(bst.x - bst.home) > 3) go(bst.home); else { bst.act = 'hustle'; bst.until = t + 2.5; } }
+    if (bst.act === 'walk') {
+      bst.x += bst.dir * 22 * dt;
+      bst.phase += dt * 9;
+      if ((bst.target - bst.x) * bst.dir <= 0) { bst.x = bst.target; bst.act = near && bst.target === bst.home ? 'hustle' : bst.target === bst.home ? 'lean' : pick(Math.random, ['lookout', 'lookout', 'count']); bst.until = t + 2 + Math.random() * 2.5; }
+      return;
+    }
+    if (bst.act === 'lookout') bst.flip = Math.floor(t * 1.2) % 2 === 0;
+    if (t < bst.until) return;
+    if (bst.act === 'hustle' && near) { bst.until = t + 2; return; }
+    bst.flip = false;
+    const r2 = Math.random();
+    if (Math.abs(bst.x - bst.home) > 3 && r2 < 0.6) go(bst.home);
+    else if (r2 < 0.55) go(bst.home + (Math.random() < 0.5 ? -1 : 1) * (24 + Math.random() * 40));
+    else { bst.act = r2 < 0.8 ? 'lean' : 'count'; bst.until = t + 2 + Math.random() * 3; }
+  }
+
   function update(dt) {
     if (!active) return;
     t += dt;
@@ -401,6 +433,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
       moving = true;
     }
     bob = moving ? Math.abs(Math.sin(t * 9)) * 1.2 : bob * 0.8;
+    if (bst) boosterBrain(dt);
     nextCar -= dt;
     if (nextCar <= 0 && cars.length < 2) {
       const dir = Math.random() > 0.5 ? 1 : -1;
@@ -505,6 +538,27 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     row(cr.R, x1, false);
   }
 
+  // the Hammerdome's marquee: chasing bulbs round a scrolling LED ticker with the live lot and bid
+  function drawTicker(cx) {
+    const { ticker: tk, bulbs } = auctionInfo;
+    const chase = Math.floor(t * 8);
+    bulbs.forEach(([bx, by], i) => oval(ctx, bx - cx, oy + by, 1.3, 1.3, (i >> 1) % 3 === chase % 3 ? '#7a5a20' : '#fff3a0', 0.4));
+    const s = auction?.state;
+    if (!s) return;
+    const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
+    const msg = !s.lot ? 'NEXT LOT COMING UP  ★  STEP INSIDE  ★  ' : s.phase === 'sold'
+      ? `${s.high ? `SOLD ${money(s.bid)} TO ${s.high.you ? 'YOU' : s.high.paddle.toUpperCase()}` : 'NO SALE'}  ★  LOT ${s.lot.lot} ${s.lot.name.toUpperCase()}  ★  `
+      : `LOT ${s.lot.lot}  ★  ${s.lot.name.toUpperCase()}  ★  ${money(s.bid || s.lot.start)}  ★  ${s.left <= 3 ? 'GOING TWICE' : s.left <= 6 ? 'GOING ONCE' : `${Math.ceil(s.left)}s LEFT`}  ★  `;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(tk.x - cx, oy + tk.y, tk.w, tk.h); ctx.clip();
+    ctx.font = `400 8px ${FONT.block}`;
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(msg).width, off = (t * 22) % w;
+    ctx.fillStyle = s.phase === 'sold' ? '#ff5a4a' : '#ffb21a';
+    for (let x = -off; x < tk.w + w; x += w) ctx.fillText(msg, tk.x - cx + 2 + x, oy + tk.y + tk.h / 2 + 0.6);
+    ctx.restore();
+  }
+
   function render() {
     const k = scale * dpr;
     ctx.setTransform(k, 0, 0, k, 0, 0);
@@ -543,6 +597,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
       if (n.x + n.n.w < cx || n.x > cx + viewW) return;
       ctx.drawImage(neonState[i].on ? n.n.on : n.n.off, n.x - cx, oy + n.y, n.n.w, n.n.h);
     });
+    if (auctionInfo && onScreen(segOf('auction').x + AUC_W / 2, AUC_W)) drawTicker(cx);
     if (laundry && onScreen(laundry.x0, 40)) {
       const cols = ['#ffdf00', '#009739', '#ffffff', C.red, C.blue];
       for (let i = 0; i < 5; i++) {
@@ -562,12 +617,16 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     // the van's cat + the booster leaning by the open trunk
     if (alleyInfo) {
       ctx.drawImage(cat[Math.floor(tk / 8) % 2], alleyInfo.cat.x - cx, oy + alleyInfo.cat.y - 4, 22, 18);
-      const b = alleyInfo.booster;
-      const near = Math.abs(b.x + 30 - (cx + viewW / 2)) < viewW * 0.35 || hover === 'booster';
+      const b = alleyInfo.booster, bx = bst.x;
       const ph = (tk / 12) % 3.2, beat = Math.floor(tk / 4);
-      const bf = near && ph > 0.4 && ph < 2.2 ? [booster.talk, booster.point, booster.talk2, booster.point][beat % 4] : (tk / 12) % 4.4 < 0.15 ? booster.blink : beat % 2 ? booster.bob : booster.idle;
-      drawFig(bf, b.x - cx, oy + b.y - 7, false, LIGHT.night);
-      if (near) ctx.drawImage(bubble, b.x - bubble.uw * 0.82 + 2 - cx, oy + b.y - 7 - castH('booster') - bubble.uh + 6, bubble.uw, bubble.uh);
+      const hustling = bst.act === 'hustle';
+      const bf = bst.act === 'walk' ? { id: 'booster', walk: Math.floor(bst.phase * 1.5) / 1.5 }
+        : bst.act === 'lookout' ? booster.look
+        : bst.act === 'count' ? [booster.bob, booster.thumb, booster.bob, booster.idle][beat % 4]
+        : hustling && ph > 0.4 && ph < 2.2 ? [booster.talk, booster.point, booster.talk2, booster.point][beat % 4]
+        : (tk / 12) % 4.4 < 0.15 ? booster.blink : beat % 2 ? booster.bob : booster.idle;
+      drawFig(bf, bx - cx, oy + b.y - 7, bst.act === 'walk' ? bst.dir < 0 : bst.flip, LIGHT.night);
+      if (hustling) ctx.drawImage(bubble, bx - bubble.uw * 0.82 + 2 - cx, oy + b.y - 7 - castH('booster') - bubble.uh + 6, bubble.uw, bubble.uh);
       const tg = bTags[hover === 'booster' ? 'h' : 'n'];
       ctx.drawImage(tg, b.x + 36 - tg.uw / 2 - cx, Math.max(uiTop() / scale, oy + G - 172), tg.uw, tg.uh);
     }
@@ -624,6 +683,11 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
       ctx.drawImage(fr, sx2, y, c.w, 32);
     }
     for (const s of fx.steam) if (s.road) drawPuffs(s.p, '#ffffff', 2.4, cx, oy);
+    if (auctionInfo) {
+      const seg = segOf('auction'), tg = aTags[hover === 'auction' ? 'h' : 'n'];
+      const tx = seg.x + seg.w / 2 - tg.uw / 2 - cx;
+      if (tx > -tg.uw && tx < viewW) ctx.drawImage(tg, tx, Math.max(uiTop() / scale, oy + tops.auction - 16) + (hover === 'auction' ? Math.sin(t * 8) * 0.8 : 0), tg.uw, tg.uh);
+    }
     for (const seg of segs) if (seg.kind === 'store') {
       const tg = tags[seg.id][hover === seg.id ? 'h' : 'n'];
       const tx = seg.x + seg.w / 2 - tg.uw / 2 - cx;
@@ -645,6 +709,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     jumpToStore(id) { const s = segOf(id); camX = clampCam(centerOn(s.x + s.w / 2)); },
     walkToStore(id, panelPx = 0) { const s = segOf(id); return walkTo(centerOn(s.x + s.w / 2, panelPx)); },
     walkToBooster() { const s = segs.find((x) => x.kind === 'alley'); return walkTo(centerOn(s.x + s.w / 2)); },
+    walkToAuction() { const s = segOf('auction'); return walkTo(centerOn(s.x + s.w / 2)); },
     trunkScreen() { return { x: (alleyInfo.trunk.x - camX) * scale, y: (mainY + alleyInfo.trunk.y) * scale }; },
     setEntering(id) { entering = id; enterT = 0; if (id) render(); },
     doorScreen(id) { const d = doors[id]; return { x: (d.x + d.w / 2 - camX) * scale, y: (mainY + d.y + d.h / 2) * scale }; },

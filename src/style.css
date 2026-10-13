@@ -82,6 +82,8 @@ button { cursor: pointer; }
 #card[data-theme='oceania'] { --a: #2f62e0; --b: #5f8af0; }
 #card[data-theme='booster'] { --a: #1d2150; --b: #2a2f6b; }
 #card[data-theme='booster'] h2 { color: var(--gold); }
+#card[data-theme='auction'] { --a: #7a1424; --b: #9a1830; }
+#card[data-theme='auction'] h2 { color: var(--gold); }
 @keyframes card { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 @keyframes slam { 0% { transform: scale(2.4) rotate(-8deg); } 25% { transform: scale(0.94) rotate(-1deg); } 35% { transform: scale(1.04) rotate(-3deg); } 100% { transform: scale(1.06) rotate(-2deg); } }
 @keyframes spin { to { transform: rotate(40deg); } }
@@ -125,6 +127,10 @@ button { cursor: pointer; }
 #directory button.booster { background: var(--navy); color: var(--gold); --pc: var(--navy); --ps: var(--gold); }
 #directory button.booster small { background: var(--gold); color: var(--ink); }
 #directory button.booster.here { background: var(--gold); color: var(--ink); --pc: var(--gold); --ps: var(--ink); }
+#directory button.auction { background: #9a1830; color: var(--gold); --pc: #9a1830; --ps: var(--gold); }
+#directory button.auction small { background: var(--gold); color: #9a1830; animation: live 1s steps(2) infinite; }
+#directory button.auction.here { background: var(--gold); color: #7a1424; --pc: var(--gold); --ps: #7a1424; }
+@keyframes live { 50% { background: var(--white); } }
 #hint { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 14px 5px; background: var(--white); border: var(--line); border-radius: 3px; box-shadow: var(--edge); font-size: 14px; font-weight: 700; z-index: 20; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
 #directory, #hint { transition: opacity 0.3s; }
 body[data-mode='interior'] #directory, body[data-mode='interior'] #hint, body[data-mode='aerial'] #directory, body[data-mode='aerial'] #hint, body.panel-open #hint, body.panel-open #directory { opacity: 0; pointer-events: none; }
@@ -192,6 +198,9 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
 .cond { left: 8px; top: 8px; max-width: calc(100% - 16px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--white); color: var(--ink); }
 .badge { right: 8px; bottom: 8px; background: var(--ink); color: var(--gold); }
 .badge.pick { background: var(--gold); color: var(--ink); }
+.badge.off { font-size: 14px; background: var(--red); color: var(--white); transform: rotate(-6deg); }
+.was { font: 13px/1 var(--slab); color: var(--muted); margin-left: auto; text-decoration-thickness: 2px; text-decoration-color: var(--red); }
+.was + .price { margin-left: 0; }
 .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 8px; }
 .row .price { margin-left: auto; }
@@ -225,6 +234,57 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
 #market.booster .add { background: var(--gold); color: var(--ink); }
 #market.booster .add.in { background: var(--lime); }
 #market.booster #sort { background: #2a2f6b; color: var(--gold); }
+#market.booster .badge.off { background: var(--red); color: var(--white); }
+#market.booster .was { color: #c8c4f0; }
+
+/* Hammerdome Auction Hall: oxblood velvet and gold leaf */
+#market.auction { background: #4a0c18; color: var(--white); box-shadow: 0 6px 0 var(--gold); }
+#market.auction .mhead { background: #7a1424; box-shadow: inset 0 0 0 3px #7a1424, inset 0 0 0 4.5px var(--gold); }
+#market.auction .mtitle { background: #7a1424; border-color: var(--ink); }
+#market.auction .mtitle h2 { color: var(--gold); }
+#market.auction .mtitle p { color: #f2d6b0; }
+#market.auction .crumb { background: #9a1830; color: var(--gold); }
+#market.auction .crumb.on { background: var(--gold); color: #4a0c18; }
+#market.auction #sort, #market.auction #country-chips { display: none; }
+#market.auction #grid { display: block; }
+.auc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.auc .lotcard { background: #2a0810; color: var(--white); }
+.auc .lotcard .art { background: radial-gradient(#5a3a7a, #1d0c20); }
+.auc .lotcard .brand, .auc .lotcard .blurb, .auc .lotcard .size { color: #f2d6b0; }
+.auc .lotcard .where { color: var(--hot); }
+.auc .badge.only { background: var(--gold); color: #4a0c18; }
+.auc .est { font: 12px/1 var(--slab); color: var(--gold); margin-left: auto; }
+.auc .live { background: #120c18; border: var(--line); border-radius: 3px; box-shadow: 0 4px 0 var(--gold); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.auc .cur { display: grid; gap: 2px; }
+.auc .cur small { font: 12px/1 var(--slab); color: #f2d6b0; letter-spacing: 0.04em; text-transform: uppercase; }
+.auc .cur b { font: 34px/1 var(--slab); color: var(--lime); -webkit-text-stroke: 1px var(--ink); text-shadow: 2px 2px 0 var(--ink); font-variant-numeric: tabular-nums; }
+.auc .cur span { font-weight: 700; color: #f2d6b0; }
+.auc .cur span.you { color: var(--gold); font: 16px/1.1 var(--slab); }
+.auc .clock { position: relative; height: 26px; background: #2a1a30; border: 2.5px solid var(--ink); border-radius: 2px; overflow: hidden; }
+.auc .clock i { position: absolute; inset: 0 auto 0 0; background: var(--gold); transition: width 0.1s linear; }
+.auc .clock.hot i { background: var(--red); }
+.auc .clock.hot { animation: live 0.5s steps(2) infinite; }
+.auc .clock span { position: relative; display: block; text-align: center; font: 14px/22px var(--slab); color: var(--white); -webkit-text-stroke: 0.6px var(--ink); }
+.auc .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.auc .btns button { margin: 0; font: 15px/1.1 var(--slab); padding: 10px 8px 8px; }
+.auc .btns .add { background: var(--gold); }
+.auc .btns .jump { background: var(--red); color: var(--white); --pc: var(--red); --ps: var(--white); }
+.auc .btns button:disabled { filter: grayscale(0.6); opacity: 0.75; cursor: default; }
+.auc .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.auc .feed li { display: flex; gap: 10px; align-items: baseline; padding: 4px 8px; background: #2a1a30; border-radius: 2px; font-size: 14px; color: #f2d6b0; }
+.auc .feed li b { font: 14px/1 var(--slab); color: var(--white); font-variant-numeric: tabular-nums; }
+.auc .feed li.top { outline: 2px solid var(--gold); }
+.auc .feed li.you { background: var(--gold); color: #4a0c18; }
+.auc .feed li.you b { color: #4a0c18; }
+.auc .next { grid-column: 1 / -1; }
+.auc .next h4 { margin: 4px 0 8px; font: 18px/1 var(--slab); color: var(--gold); }
+.auc .next ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.auc .next li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; background: #2a0810; border: 2.5px solid var(--ink); border-radius: 2px; padding: 6px; }
+.auc .next .mini { width: 44px; height: 44px; background: #5a3a7a; display: grid; place-items: center; }
+.auc .next .mini img { width: 40px; height: 40px; }
+.auc .next b { display: block; font: 12px/1.1 var(--slab); color: var(--gold); }
+.auc .next span { display: block; font-size: 13px; font-weight: 700; line-height: 1.15; }
+.auc .next em { display: block; font-style: normal; font-size: 12px; color: #f2d6b0; }
 
 /* Bag */
 #bag-list { list-style: none; margin: 0; padding: 0 14px; flex: 1; overflow: auto; }
@@ -258,6 +318,9 @@ body[data-mode='interior']:not(.panel-open) #browse { display: block; }
   #market { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 58vh; border-width: 4px 0 0; border-radius: 0; box-shadow: none; transform: translateY(105%); }
   #bag { top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 72vh; border-width: 4px 0 0; border-radius: 0; box-shadow: none; transform: translateY(105%); }
   #grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 12px 10px 30px; }
+  .auc { grid-template-columns: 1fr; }
+  .auc .live { order: -1; }
+  .auc .cur b { font-size: 28px; }
   .mtitle h2 { font-size: 26px; }
   #directory { top: 108px; padding: 6px 10px 12px; }
   #directory button { padding: 6px 10px 4px; font-size: 12px; }

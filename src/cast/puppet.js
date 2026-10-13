@@ -27,12 +27,47 @@ export const CAST = {
 export async function loadCast() {
   await Promise.all(Object.values(CAST).map((m) => new Promise((res) => {
     const img = new Image();
-    img.onload = () => res();
+    img.onload = () => { legs(m); res(); };
     img.onerror = () => res();
     img.src = m.src;
     m.img = img;
   })));
 }
+// trace the gap between the legs row by row, so a walk can pull the two legs apart along the real seam
+function legs(m) {
+  const img = m.img, h = 160, w = Math.max(8, Math.round((img.naturalWidth * h) / img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, 0, 0, w, h);
+  const a = x.getImageData(0, 0, w, h).data;
+  const solid = (cx, cy) => a[(cy * w + cx) * 4 + 3] > 60;
+  const top = Math.round(h * m.hip);
+  const gap = new Array(h).fill(null);
+  for (let row = top; row < h; row++) {
+    const runs = [];
+    let st = -1;
+    for (let cx = 0; cx <= w; cx++) {
+      const on = cx < w && solid(cx, row);
+      if (on && st < 0) st = cx;
+      if (!on && st >= 0) { runs.push([st, cx]); st = -1; }
+    }
+    if (!runs.length) continue;
+    // the two legs are the two widest runs nearest the middle; arms hanging at the sides are ignored
+    const mid = (runs[0][0] + runs[runs.length - 1][1]) / 2;
+    const big = runs.filter(([p, q]) => q - p > w * 0.06).sort((p, q) => Math.abs((p[0] + p[1]) / 2 - mid) - Math.abs((q[0] + q[1]) / 2 - mid)).slice(0, 2).sort((p, q) => p[0] - q[0]);
+    gap[row] = big.length === 2 ? (big[0][1] + big[1][0]) / 2 / w : null;
+  }
+  // rows where the legs touch take the nearest traced gap; above that, the crotch
+  let last = null;
+  for (let row = h - 1; row >= top; row--) { if (gap[row] != null) last = gap[row]; else gap[row] = last; }
+  const fill = gap.find((g) => g != null) ?? 0.5;
+  for (let row = 0; row < h; row++) if (gap[row] == null) gap[row] = fill;
+  // smooth the seam so the split never zigzags
+  m.gap = gap.map((_, i) => { let sum = 0, n = 0; for (let k = -3; k <= 3; k++) { const g = gap[Math.max(0, Math.min(h - 1, i + k))]; sum += g; n++; } return sum / n; });
+}
+const gapAt = (m, v) => (m.gap ? m.gap[Math.max(0, Math.min(m.gap.length - 1, Math.round(v * m.gap.length)))] : 0.5);
+
 // the natural height of a character in lineup pixels: keeps everyone's height relative to each other
 export const castPx = (id) => CAST[id].img?.naturalHeight || 600;
 
@@ -111,14 +146,17 @@ export function drawPuppet(ctx, id, x, y, H, P = {}, o = {}) {
   sx.setTransform(k, 0, 0, k, 0, 0);
   sx.imageSmoothingQuality = 'high';
   if (o.flip) { sx.translate(Wu, 0); sx.scale(-1, 1); }
-  const cx = Wu / 2, feet = Hu - pad * 0.5 - (P.hop || 0) * H;
-  const lean = P.lean || 0, breathe = P.breathe || 0;
-  const dxAt = (v) => lean * H * Math.pow(1 - v, 1.5); // feet planted, the body leans more the higher up it goes
+  const cx = Wu / 2, feet = Hu - pad * 0.5 - (P.hop || 0) * H - (P.walk != null ? Math.abs(Math.cos(P.walk)) * H * 0.022 : 0);
+  const walking = P.walk != null;
+  const lean = (P.lean || 0) + (walking ? 0.025 : 0), breathe = P.breathe || 0;
+  // feet planted, the body leans more the higher up it goes (a walker leans from the hips instead)
+  const dxAt = (v) => lean * H * Math.pow(walking ? Math.max(0, (m.hip - v) / m.hip) : 1 - v, 1.5);
   // bands from the feet up: the body leans over planted feet and swells on a breath; above the neck the bands
   // bend further and drop for a nod, so the head tips and bobs with no hinge or seam (hoods and collars that
   // rise behind the head bend along with it)
   const BANDS = Math.max(40, Math.min(260, Math.round((H * k) / 3.5))); // a band every few device pixels: no visible steps
   let yb = feet;
+  const stride = walking ? Math.sin(P.walk) : 0, kneeV = m.hip + 0.06;
   const tilt = P.tilt || 0, nod = (P.nod || 0) * H * 0.012;
   for (let i = BANDS - 1; i >= 0; i--) {
     const v0 = i / BANDS, vm = (i + 0.5) / BANDS, srcY = v0 * img.height, srcH = img.height / BANDS;
@@ -126,7 +164,14 @@ export function drawPuppet(ctx, id, x, y, H, P = {}, o = {}) {
     const hU = srcH * s * syA * (torso ? 1 + breathe : 1);
     const w = bw * (torso ? 1 + breathe * 0.5 : 1);
     const dx = dxAt(vm) + (above ? tilt * 1.6 * (m.neck - vm) * H : 0);
-    sx.drawImage(img, 0, srcY, img.width, Math.min(srcH + 1, img.height - srcY), cx - w / 2 + dx, yb - hU + nod * Math.min(1, Math.max(0, (m.neck - vm) / 0.07)), w, hU + 1 / k);
+    const sh = Math.min(srcH + 1, img.height - srcY), y0 = yb - hU + nod * Math.min(1, Math.max(0, (m.neck - vm) / 0.07));
+    if (walking && vm > kneeV) {
+      // walking: the legs come apart along their seam, the stride growing from the knees down to the feet
+      const g = gapAt(m, vm), f = Math.pow((vm - kneeV) / (1 - kneeV), 1.5), d = stride * H * 0.17 * f;
+      const lift = H * 0.03 * f;
+      sx.drawImage(img, 0, srcY, (g + 0.006) * img.width, sh, cx - w / 2 + dx - d, y0 - Math.max(0, -stride) * lift, (g + 0.006) * w, hU + 1 / k);
+      sx.drawImage(img, g * img.width, srcY, (1 - g) * img.width, sh, cx - w / 2 + g * w + dx + d, y0 - Math.max(0, stride) * lift, (1 - g) * w, hU + 1 / k);
+    } else sx.drawImage(img, 0, srcY, img.width, sh, cx - w / 2 + dx, y0, w, hU + 1 / k);
     yb -= hU;
   }
   // lighting, only where the figure is

@@ -66,7 +66,15 @@ export function buildAerial(segs, width, stores, openById, R) {
   for (const seg of segs) {
     const x = ox + seg.x;
     if (seg.kind === 'store') (openById[seg.id] === false ? ROOFS.construction : ROOFS[seg.id])(ctx, x, ROW, seg.w, DEPTH, r);
-    else if (seg.kind === 'alley') {
+    else if (seg.kind === 'auction') {
+      // the Hammerdome from above: marble roof, a big gold dome, red carpet to the curb
+      rect(ctx, x, ROW, seg.w, DEPTH, '#f3ead8', LW);
+      for (let i = 0; i < 6; i++) oval(ctx, x + 14 + i * ((seg.w - 28) / 5), ROW + DEPTH - 8, 4, 4, '#fbf6ea', LW * 0.7);
+      oval(ctx, x + seg.w / 2, ROW + 40, 30, 30, C.gold, LW);
+      for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; line(ctx, [[x + seg.w / 2, ROW + 40], [x + seg.w / 2 + Math.cos(a) * 30, ROW + 40 + Math.sin(a) * 30]], 0.6, C.gold2); }
+      oval(ctx, x + seg.w / 2, ROW + 40, 7, 7, '#f3ead8', LW);
+      rect(ctx, x + seg.w / 2 - 8, ROW + DEPTH - 2, 16, 18, '#c8102e', LW * 0.7);
+    } else if (seg.kind === 'alley') {
       rect(ctx, x, ROW, seg.w, DEPTH, '#2a2f6b', LW);
       rrect(ctx, x + 30, ROW + 18, 58, 64, 4, '#ffffff', LW);
       for (let k = 0; k < 4; k++) line(ctx, [[x + 37 + k * 13, ROW + 28], [x + 37 + k * 13, ROW + 70]], 0.7, '#c6c2d4');
@@ -92,10 +100,10 @@ export function buildAerial(segs, width, stores, openById, R) {
   // label pills over each roof
   for (const seg of segs) {
     if (seg.kind === 'cross') continue;
-    const label = seg.kind === 'alley' ? 'BOOSTER' : stores[seg.id].region.toUpperCase();
+    const label = seg.kind === 'alley' ? 'BOOSTER' : seg.kind === 'auction' ? 'AUCTION HOUSE' : stores[seg.id].region.toUpperCase();
     const w = measure(label, 8, FONT.slab) + 14;
     const lx = ox + seg.x + seg.w / 2 - w / 2, ly = ROW + DEPTH / 2 - 7;
-    const bg = seg.kind === 'alley' ? '#2a2f6b' : openById[seg.id] === false ? C.orange : '#ffffff', fg = seg.kind === 'alley' ? C.gold : K;
+    const bg = seg.kind === 'alley' ? '#2a2f6b' : seg.kind === 'auction' ? '#9a1830' : openById[seg.id] === false ? C.orange : '#ffffff', fg = seg.kind === 'alley' || seg.kind === 'auction' ? C.gold : K;
     rect(ctx, lx, ly, w, 14, bg, 1.2);
     ctx.lineWidth = 0.5; ctx.strokeStyle = fg; ctx.strokeRect(lx + 1.6, ly + 1.6, w - 3.2, 10.8);
     text(ctx, label, lx + w / 2, ly + 7.6, { size: 8, font: FONT.slab, fill: fg });

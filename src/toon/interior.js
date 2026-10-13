@@ -215,9 +215,17 @@ export function buildOwner(storeId, R) {
 }
 // every owner stands with their waist just below the counter top, so the counter hides everything from the
 // belt down and the same amount of each of them shows above it
+// how much of each owner shows above the counter, and where the counter cuts them (fraction of their height)
+const SHOW = 80;
+const cutAt = (m) => m.counter ?? m.hip;
 export function drawOwner(ctx, pose, actor) {
-  const m = CAST[pose.id], H = 80 / m.hip;
-  drawPuppet(ctx, pose.id, OWNER_X, COUNTER_Y + 5 + (1 - m.hip) * H, H, pose, { light: actor.light, shadow: false });
+  const m = CAST[pose.id], H = SHOW / cutAt(m);
+  drawPuppet(ctx, pose.id, OWNER_X, COUNTER_Y + 5 + (1 - cutAt(m)) * H, H, pose, { light: actor.light, shadow: false });
+}
+// the strip of the room the camera keeps in frame: from just over the owner's head to just under the counter top
+export function ownerBand(id) {
+  const top = COUNTER_Y + 5 - SHOW;
+  return { top: top - 7, bottom: COUNTER_Y + 9 };
 }
 const STORE_LIGHT = { 'north-america': '#ffd21f', canada: '#7fe0ff', 'south-america': '#ff8a1f', europe: '#c6c2ff', africa: '#8fe03a', asia: '#ff6fb5', oceania: '#ffe066' };
 export { COUNTER_Y };
@@ -252,4 +260,165 @@ export function drawBoosterBust(ctx, pose) {
 // head-and-shoulders portrait for the dialogue box
 export function portrait(actor) {
   return puppetPortrait(actor.id, 160);
+}
+
+// ---------- Hammerdome Auction Hall: velvet curtains, a stage, the podium and the lot up on the big screen ----------
+export const AW = 300, AH2 = 150;
+const POD = { x: 92, y: 74, w: 52 }; // podium top-left; the auctioneer stands behind it
+const SCREEN = { x: 170, y: 22, w: 96, h: 70 };
+export function buildAuctionHall(R) {
+  const [c, ctx] = layer(AW, AH2, R);
+  rect(ctx, 0, 0, AW, AH2, '#5a0f1e', 0);
+  // back wall: deep red damask with a gold dado rail
+  ctx.fillStyle = '#6e1426';
+  for (let y = 6; y < 96; y += 12) for (let x = (y / 12) % 2 ? 6 : 0; x < AW; x += 12) { ctx.beginPath(); ctx.moveTo(x, y - 3); ctx.lineTo(x + 3, y); ctx.lineTo(x, y + 3); ctx.lineTo(x - 3, y); ctx.fill(); }
+  rect(ctx, -1, 92, AW + 2, 4, C.gold, LW);
+  rect(ctx, -1, 96, AW + 2, 22, '#3a0a16', LW);
+  for (let x = 6; x < AW; x += 16) rect(ctx, x, 99, 10, 15, '#4a0e1c', LW * 0.6);
+  // swagged curtains at both sides and a pelmet along the top
+  for (const s of [0, 1]) {
+    const x0 = s ? AW - 46 : 0;
+    poly(ctx, s ? [[AW, 0], [AW - 46, 0], [AW - 30, 60], [AW - 40, 118], [AW, 118]] : [[0, 0], [46, 0], [30, 60], [40, 118], [0, 118]], '#a8122c', LW);
+    for (let k = 1; k < 5; k++) line(ctx, s ? [[AW - k * 9, 0], [AW - k * 6 - 2, 60], [AW - k * 8, 118]] : [[k * 9, 0], [k * 6 + 2, 60], [k * 8, 118]], 0.7, '#7a0c1e', true);
+    oval(ctx, s ? AW - 34 : 34, 62, 4, 3, C.gold, LW * 0.8);
+    rect(ctx, x0, 0, 46, 2, C.gold, 0);
+  }
+  for (let x = 0; x < AW; x += 20) { ctx.beginPath(); ctx.ellipse(x + 10, 6, 11, 7, 0, 0, Math.PI); ctx.fillStyle = '#a8122c'; ctx.fill(); ctx.lineWidth = LW; ctx.strokeStyle = K; ctx.stroke(); }
+  rect(ctx, -1, -1, AW + 2, 7, '#a8122c', LW);
+  for (let x = 4; x < AW; x += 5) line(ctx, [[x, 12], [x, 15]], 0.8, C.gold);
+  // chandelier
+  line(ctx, [[150, 6], [150, 14]], 0.8);
+  ctx.beginPath(); ctx.ellipse(150, 18, 16, 5, 0, 0, Math.PI); ctx.fillStyle = C.gold; ctx.fill(); ctx.lineWidth = LW; ctx.strokeStyle = K; ctx.stroke();
+  for (let k = -3; k <= 3; k++) { line(ctx, [[150 + k * 4.6, 19], [150 + k * 4.6, 23]], 0.6, C.gold2); oval(ctx, 150 + k * 4.6, 24, 1.3, 1.6, '#fff3a0', 0.4); }
+  // the big screen for the lot, framed in gold (contents drawn live)
+  rrect(ctx, SCREEN.x - 5, SCREEN.y - 5, SCREEN.w + 10, SCREEN.h + 10, 2, C.gold, LW);
+  rect(ctx, SCREEN.x, SCREEN.y, SCREEN.w, SCREEN.h, '#120c18', LW);
+  text(ctx, 'ON THE BLOCK', SCREEN.x + SCREEN.w / 2, SCREEN.y - 9, { size: 5, font: FONT.slab, fill: C.gold, stroke: K, sw: 0.5 });
+  // stage
+  rect(ctx, 20, 108, 260, 10, '#8a4a22', LW);
+  rect(ctx, 20, 108, 260, 2, C.gold, 0.5);
+  for (let x = 30; x < 280; x += 14) line(ctx, [[x, 110], [x, 118]], 0.4, '#6a3414');
+  // the house sign
+  rrect(ctx, 54, 26, 36, 22, 2, '#1d1a22', LW);
+  text(ctx, 'NO', 72, 33, { size: 4.4, font: FONT.block, fill: C.gold });
+  text(ctx, 'REFUNDS', 72, 39.6, { size: 4.4, font: FONT.block, fill: C.gold });
+  text(ctx, 'EVER', 72, 45.6, { size: 3.4, font: FONT.round, weight: 700, fill: '#ffffff' });
+  return c;
+}
+// the podium goes in front of the auctioneer
+export function buildPodium(R) {
+  const [c, ctx] = layer(AW, AH2, R);
+  const { x, y, w } = POD;
+  poly(ctx, [[x, y], [x + w, y], [x + w - 4, 110], [x + 4, 110]], '#7a3a18', LW);
+  rect(ctx, x - 3, y - 3, w + 6, 5, '#5a2a10', LW);
+  rrect(ctx, x + w / 2 - 11, y + 8, 22, 22, 2, C.gold, LW);
+  text(ctx, 'H', x + w / 2, y + 19.6, { size: 13, font: FONT.slab, fill: '#7a1424', stroke: K, sw: 0.6 });
+  for (const lx of [x + 8, x + w - 8]) line(ctx, [[lx, y + 6], [lx - 2, 108]], 0.6, '#5a2a10');
+  // a sound block and a glass of water on top
+  rrect(ctx, x + 4, y - 7, 12, 4, 1, '#3a1a08', LW * 0.7);
+  rect(ctx, x + w - 10, y - 9, 5, 6, 'rgba(200,240,255,0.6)', LW * 0.6);
+  return c;
+}
+// live layer: the lot on the screen, the spotlight, the auctioneer and the room's paddles
+const SEATS = 9;
+export function drawAuctionLive(ctx, s, t, gavel) {
+  // lot on the big screen
+  if (s.lot) {
+    const { x, y, w, h } = SCREEN;
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    const g = ctx.createRadialGradient(x + w / 2, y + h * 0.45, 4, x + w / 2, y + h * 0.45, w * 0.7);
+    g.addColorStop(0, '#3a2a5a'); g.addColorStop(1, '#120c18');
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+    ctx.drawImage(itemCanvas(s.lot), x + w / 2 - 22, y + 4, 44, 44);
+    text(ctx, `LOT ${s.lot.lot}`, x + 12, y + 7, { size: 4.4, font: FONT.slab, fill: C.gold });
+    const nm = s.lot.name.length > 26 ? `${s.lot.name.slice(0, 25)}…` : s.lot.name;
+    text(ctx, nm.toUpperCase(), x + w / 2, y + 53, { size: 4.2, font: FONT.block, fill: '#ffffff' });
+    const sold = s.phase === 'sold';
+    const bid = `$${Math.round(s.bid || s.lot.start).toLocaleString('en-US')}`;
+    text(ctx, sold ? (s.high ? `SOLD ${bid}` : 'NO SALE') : bid, x + w / 2, y + 62, { size: 7, font: FONT.slab, fill: sold ? C.red : C.lime, stroke: K, sw: 0.6 });
+    if (!sold) rect(ctx, x + 4, y + h - 3, (w - 8) * Math.min(1, s.left / s.total), 1.6, s.left <= 6 ? C.red : C.gold, 0);
+    ctx.restore();
+  }
+  // spotlight on the podium
+  const sg = ctx.createRadialGradient(118, 64, 4, 118, 64, 70);
+  sg.addColorStop(0, 'rgba(255,236,170,0.32)'); sg.addColorStop(1, 'rgba(255,236,170,0)');
+  ctx.fillStyle = sg; ctx.fillRect(40, 0, 160, 120);
+  drawAuctioneer(ctx, POD.x + POD.w / 2, POD.y, t, gavel);
+}
+// The auctioneer: Hoss Hammerdome, ten-gallon hat taller than his torso, white suit, bolo tie, gavel in hand.
+// Shown as a spotlit silhouette with a gold rim until his hand-drawn art arrives.
+function drawAuctioneer(ctx, cx, podY, t, gavel) {
+  ctx.save();
+  ctx.translate(cx, podY);
+  ctx.scale(0.66, 0.66);
+  const bob = Math.round(Math.sin(t * 6) * 2) / 2;
+  const sil = '#160c14', rim = C.gold;
+  const paint = (pts, curve) => {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      if (curve) { const p = pts[i - 1], q = pts[i]; ctx.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2); } else ctx.lineTo(pts[i][0], pts[i][1]);
+    }
+    ctx.closePath(); ctx.fillStyle = sil; ctx.fill(); ctx.lineWidth = 1.3; ctx.strokeStyle = rim; ctx.stroke();
+  };
+  const y = bob;
+  // shoulders and suit
+  paint([[-26, 4], [-24, y - 20], [-9, y - 27], [9, y - 27], [24, y - 20], [26, 4]]);
+  // head
+  ctx.beginPath(); ctx.ellipse(0, y - 37, 9, 11, 0, 0, Math.PI * 2); ctx.fillStyle = sil; ctx.fill(); ctx.lineWidth = 1.3; ctx.strokeStyle = rim; ctx.stroke();
+  // the hat: a ten-gallon crown that goes on forever, pinched at the top, on a brim curled up at both sides
+  paint([[-34, y - 52], [-24, y - 46], [-12, y - 48], [-15, y - 98], [-11, y - 112], [-4, y - 106], [0, y - 112], [4, y - 106], [11, y - 112], [15, y - 98], [12, y - 48], [24, y - 46], [34, y - 52], [26, y - 42], [0, y - 39], [-26, y - 42]], true);
+  ctx.fillStyle = rim; ctx.fillRect(-13, y - 58, 26, 4);
+  // gavel arm: up while he calls, slammed down on a bid or the hammer
+  const ang = gavel > 0 ? 0.9 : -1.3 + Math.sin(t * 5) * 0.12;
+  ctx.save(); ctx.translate(20, y - 18); ctx.rotate(ang);
+  paint([[0, -3.4], [26, -3.4], [26, 3.4], [0, 3.4]]);
+  ctx.translate(26, 0); ctx.rotate(-ang + (gavel > 0 ? 0.2 : 0));
+  rrect(ctx, -8, -6, 16, 8, 1.8, '#8a4a22', LW); rect(ctx, -1.4, 2, 2.8, 11, '#8a4a22', LW * 0.8);
+  ctx.restore();
+  if (gavel > 0) for (let k = 0; k < 5; k++) { const a = -Math.PI + k * (Math.PI / 4); line(ctx, [[50 + Math.cos(a) * 9, -6 + Math.sin(a) * 6], [50 + Math.cos(a) * 16, -6 + Math.sin(a) * 10]], 1.3, C.yellow); }
+  // two eyes catch the light under the brim, and a big white handlebar moustache
+  oval(ctx, -3.6, y - 38, 1.5, 1.1, '#ffffff', 0); oval(ctx, 3.6, y - 38, 1.5, 1.1, '#ffffff', 0);
+  ctx.beginPath(); ctx.moveTo(0, y - 31); ctx.quadraticCurveTo(-8, y - 33, -12, y - 28); ctx.quadraticCurveTo(-6, y - 29, 0, y - 29); ctx.quadraticCurveTo(6, y - 29, 12, y - 28); ctx.quadraticCurveTo(8, y - 33, 0, y - 31); ctx.fillStyle = '#f4f0e8'; ctx.fill();
+  ctx.restore();
+}
+// the audience: rows of heads from behind; a paddle shoots up when that seat bids
+export function drawAudience(ctx, s, t, clock) {
+  const seatOf = (p) => { let h = 0; for (const ch of p) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % SEATS; };
+  const up = new Map();
+  for (const h of s.history || []) if (!h.who.you && clock - h.at < 1.6 && !up.has(seatOf(h.who.paddle))) up.set(seatOf(h.who.paddle), h.who.paddle);
+  for (let row = 0; row < 2; row++) {
+    const y = 130 + row * 14;
+    rect(ctx, -1, y + 4, AW + 2, 16, row ? '#200a12' : '#2a0c16', 0);
+    for (let i = 0; i < SEATS; i++) {
+      const x = 18 + i * 33 + row * 16;
+      const seat = row ? (i + 4) % SEATS : i;
+      const hat = (i * 7 + row * 3) % 5;
+      const hy = y - 4 + Math.round(Math.sin(t * 3 + i * 1.7) * 0.6);
+      ctx.fillStyle = '#12080e';
+      ctx.beginPath(); ctx.ellipse(x, hy + 10, 11, 7, 0, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x, hy, 6.4, 7.4, 0, 0, Math.PI * 2); ctx.fill();
+      if (hat === 0) { ctx.fillRect(x - 9, hy - 6, 18, 2); ctx.fillRect(x - 5, hy - 12, 10, 7); }
+      if (hat === 1) { ctx.beginPath(); ctx.ellipse(x, hy - 4, 8, 5, 0, Math.PI, Math.PI * 2); ctx.fill(); }
+      if (row === 0 && up.has(seat)) {
+        const px = x + 9, py = hy - 30;
+        line(ctx, [[px, py + 10], [px - 2, hy + 4]], 1.4, '#c8a070');
+        rrect(ctx, px - 7, py - 6, 14, 12, 2, '#ffffff', LW);
+        text(ctx, up.get(seat).replace('Paddle ', '').replace('Online', 'WEB'), px, py, { size: 5.6, font: FONT.slab, fill: K });
+      }
+    }
+  }
+}
+export function auctioneerPortrait(px = 160) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const x = c.getContext('2d');
+  x.scale(px / 40, px / 40);
+  x.fillStyle = '#7a1424'; x.fillRect(0, 0, 40, 40);
+  x.fillStyle = '#160c14';
+  x.beginPath(); x.ellipse(20, 30, 6, 7.4, 0, 0, Math.PI * 2); x.fill();
+  x.beginPath(); x.moveTo(4, 24); x.lineTo(36, 24); x.lineTo(31, 21); x.lineTo(27, 21); x.lineTo(28, 2); x.lineTo(22, -1); x.lineTo(18, -1); x.lineTo(12, 2); x.lineTo(13, 21); x.lineTo(9, 21); x.closePath(); x.fill();
+  x.fillStyle = '#ffc21a'; x.fillRect(13, 17, 14, 2);
+  x.fillStyle = '#ffffff'; x.fillRect(17, 29, 1.6, 1.2); x.fillRect(22, 29, 1.6, 1.2);
+  x.fillStyle = '#160c14'; x.fillRect(4, 38, 32, 6);
+  return c;
 }
