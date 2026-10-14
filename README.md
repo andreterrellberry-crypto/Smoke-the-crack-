@@ -50,6 +50,11 @@ No images to download and no 3D engine: every building, person, car and garment 
 | Flat garments | `src/toon/items.js` |
 | Marketplace panel, bag, search | `src/ui/market.js` |
 | Flow (intro → street → door → interior) | `src/main.js` |
+| Cut ChatGPT sheets into sprites, measure them | `tools/art/cut_sheet.py`, `tools/art/rulers.py` |
+| Screenshot every scene, fail on console errors | `tools/shots/shots.mjs` |
+
+### Working on art
+Read `docs/HANDOFF.md` first (art pitfalls, disconnects, engine contracts, backlog). ChatGPT prompts for every sheet live in `art/PROMPTS.md`; agent rules in `AGENTS.md`.
 
 ### Adding stock
 Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed in one store's `countries`. Window displays, racks, counts and the directory all update on their own. Booster Corner stock lives in `BOOSTER_RAW` (retail price, then the booster's price), and auction lots in `AUCTION_RAW` (estimate low and high, then the opening bid).
