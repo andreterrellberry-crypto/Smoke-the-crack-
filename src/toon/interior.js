@@ -219,8 +219,11 @@ export function buildOwner(storeId, R) {
 const SHOW = 80;
 const cutAt = (m) => m.counter ?? m.hip;
 export function drawOwner(ctx, pose, actor) {
-  const m = CAST[pose.id], H = SHOW / cutAt(m);
-  drawPuppet(ctx, pose.id, OWNER_X, COUNTER_Y + 5 + (1 - cutAt(m)) * H, H, pose, { light: actor.light, shadow: false });
+  const base = CAST[pose.id], front = !!base.front?.img?.naturalHeight;
+  const m = front ? base.front : base, H = SHOW / cutAt(m);
+  // Resting hands stay planted at the counter even when the owner celebrates a purchase.
+  const p = front ? { ...pose, hop: 0 } : pose;
+  drawPuppet(ctx, pose.id, OWNER_X, COUNTER_Y + 5 + (1 - cutAt(m)) * H, H, p, { front, light: actor.light, shadow: false });
 }
 // the strip of the room the camera keeps in frame: from just over the owner's head to just under the counter top
 export function ownerBand(id) {

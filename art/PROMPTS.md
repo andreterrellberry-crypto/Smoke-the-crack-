@@ -6,7 +6,8 @@ If a result drifts from the lineup, reply "match the cast lineup exactly" and re
 
 Status:
 - **Done:** Prompt 1, which produced `art/cast_lineup.png`.
-- **Requested but not received yet:** Prompt 2 (auctioneer, crowd, head-on owners).
+- **Received and integrated:** Seven individual front-owner PNGs (`<name>_front.png`). The combined sheet touched and could not be cut cleanly; each replacement was cut separately.
+- **Still needed from Prompt 2:** Auctioneer, crowd and optional gesture sheets. Single portraits support held-frame body motion, not new arm or mouth poses.
 - **Received and integrated:** Prompt 3 A, all seven storefronts, Booster alley and Hammerdome. Original PNGs are in `art/env/`; the duplicate Ura-Hara attachment was used only once.
 - **Still needed:** Prompt 3 B–H (van, rooms, counters, auction interior and optional props).
 

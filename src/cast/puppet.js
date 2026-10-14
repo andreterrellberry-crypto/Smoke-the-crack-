@@ -11,6 +11,13 @@ import chidi from '../assets/cast/chidi.webp?inline';
 import ryo from '../assets/cast/ryo.webp?inline';
 import shaz from '../assets/cast/shaz.webp?inline';
 import booster from '../assets/cast/booster.webp?inline';
+import tboneFront from '../assets/cast/tbone_front.webp?inline';
+import freshFront from '../assets/cast/fresh_front.webp?inline';
+import mandrakeFront from '../assets/cast/mandrake_front.webp?inline';
+import karimFront from '../assets/cast/karim_front.webp?inline';
+import chidiFront from '../assets/cast/chidi_front.webp?inline';
+import ryoFront from '../assets/cast/ryo_front.webp?inline';
+import shazFront from '../assets/cast/shaz_front.webp?inline';
 
 // neck: where the head meets the body, hip: the waist line, nx: x of the neck, hx: x of the face centre (fractions)
 export const CAST = {
@@ -25,10 +32,16 @@ export const CAST = {
 };
 
 export async function loadCast() {
-  await Promise.all(Object.values(CAST).map((m) => new Promise((res) => {
+  const fronts = [
+    ['north-america', tboneFront, 0.53, 0.56], ['canada', freshFront, 0.58, 0.5],
+    ['south-america', mandrakeFront, 0.56, 0.5], ['europe', karimFront, 0.58, 0.5],
+    ['africa', chidiFront, 0.58, 0.5], ['asia', ryoFront, 0.58, 0.5], ['oceania', shazFront, 0.57, 0.5],
+  ];
+  for (const [id, src, neck, nx] of fronts) CAST[id].front = { src, neck, nx, hx: nx, hip: 1, counter: 1 };
+  await Promise.all(Object.values(CAST).flatMap((m) => [m, ...(m.front ? [m.front] : [])]).map((m) => new Promise((res, reject) => {
     const img = new Image();
-    img.onload = () => { legs(m); res(); };
-    img.onerror = () => res();
+    img.onload = () => { if (m.hip < 1) legs(m); res(); };
+    img.onerror = () => reject(new Error('Could not load cast artwork'));
     img.src = m.src;
     m.img = img;
   })));
@@ -73,10 +86,10 @@ export const castPx = (id) => CAST[id].img?.naturalHeight || 600;
 
 // downscaled copies so every frame draws from an image near its on-screen size
 const cache = new Map();
-function sized(id, pxH) {
-  const m = CAST[id], img = m.img;
+function sized(id, pxH, front = false) {
+  const m = front ? CAST[id].front : CAST[id], img = m.img;
   const target = Math.max(32, Math.min(img.naturalHeight, Math.ceil(pxH / 24) * 24));
-  const key = `${id}:${target}`;
+  const key = `${id}:${front ? 'front' : 'street'}:${target}`;
   if (cache.has(key)) return cache.get(key);
   let src = img, w = img.naturalWidth, h = img.naturalHeight;
   // halve in steps for a clean downscale, then land on the target size
@@ -131,11 +144,12 @@ const sx = scratch.getContext('2d');
 
 // draw a character standing with its feet at (x, y), H world units tall, in pose P
 export function drawPuppet(ctx, id, x, y, H, P = {}, o = {}) {
-  const m = CAST[id];
+  const front = !!(o.front && CAST[id]?.front?.img?.naturalHeight);
+  const m = front ? CAST[id].front : CAST[id];
   if (!m?.img?.naturalHeight) return;
   const k = Math.hypot(ctx.getTransform().a, ctx.getTransform().b) || 1; // device px per world unit
   const sq = P.sq || 0, sxA = 1 + sq * 0.9, syA = 1 - sq;
-  const img = sized(id, H * k * syA * 1.05);
+  const img = sized(id, H * k * syA * 1.05, front);
   const s = H / img.height; // world units per source px
   const bw = img.width * s * sxA;
   const pad = H * 0.22, Wu = bw + pad * 2, Hu = H * (1.12 + (P.hop || 0)) + pad;
@@ -178,12 +192,15 @@ export function drawPuppet(ctx, id, x, y, H, P = {}, o = {}) {
   const L = o.light || LIGHT.day;
   sx.setTransform(k, 0, 0, k, 0, 0);
   sx.globalCompositeOperation = 'source-atop';
+  // The close-up art already carries its cel shading; avoid airbrushing the supplied faces.
+  if (!front) {
   const gx = sx.createLinearGradient(pad, 0, Wu - pad, 0);
   gx.addColorStop(0, L.hi); gx.addColorStop(0.45, 'rgba(0,0,0,0)'); gx.addColorStop(0.62, 'rgba(0,0,0,0)'); gx.addColorStop(1, L.lo);
   sx.fillStyle = gx; sx.fillRect(0, 0, Wu, Hu);
   const gy = sx.createLinearGradient(0, feet - H * 0.45, 0, feet);
   gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(1, L.floor);
   sx.fillStyle = gy; sx.fillRect(0, 0, Wu, Hu);
+  }
   if (o.tint) { sx.fillStyle = o.tint; sx.fillRect(0, 0, Wu, Hu); }
   sx.globalCompositeOperation = 'source-over';
   // ground shadow, then the figure

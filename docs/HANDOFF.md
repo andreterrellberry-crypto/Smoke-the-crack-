@@ -12,6 +12,14 @@ Read this whole document before you change any art or rendering code.
 - `tools/art/prepare_environments.py` rebuilds and checks the WebPs. `tools/shots/exteriors.mjs` photographs each front and taps every painted door on desktop and phone, alongside the original full scene checks.
 - Still missing: `owners_front.png`, `crowd.png`, `auctioneer.png`, pose sheets, painted interiors/counters and `van.png`. D1 is complete for front faces only; the remaining sections below describe the outstanding work and original architecture.
 
+### Individual front-owner batch — October 14, 2026
+
+- The first combined owner sheet had connected figures and was not integrated. Seven replacement PNGs, `art/{tbone,fresh,mandrake,karim,chidi,ryo,shaz}_front.png`, now supply the counter views. Each is cut independently with `tools/art/cut_sheet.py` into the matching `src/assets/cast/*_front.webp`.
+- `CAST[id].front` stores the close-up image and neck/waist registration. Only `drawOwner` selects this artwork; original full-body art and dialogue portraits retain their existing behavior.
+- The front images are 987–1176 pixels tall after cutting. They render at SHOW = 80 world units with their bottom at COUNTER_Y + 5. The counter masks the lower edge; upward hops are suppressed for resting-hand poses. Existing held-frame lean, nod and breathing remain; separate arm, mouth and blink art is still needed.
+- Front images keep their supplied shading, without the renderer's additional soft gradients. Original cast lighting and rooms are unchanged.
+- The production JS bundle is about 5.13 MB, still within the 6 MB target. This supersedes the front-owner missing-art status above. Crowd, auctioneer, gesture sheets and interiors remain outstanding.
+
 The site works. Shopping, the bag, the auction, the Booster stash, the aerial intro and the walkable block are built and tested. What is left is mostly **art direction**: the cast is hand-drawn art, while everything around it is still drawn in code, and the two don't match. Your job is to close that gap without breaking the parts that work.
 
 ---
@@ -60,7 +68,7 @@ How to work with the owner:
 | Area | State | Where |
 | --- | --- | --- |
 | Cast (7 owners + Booster) | Hand-drawn ChatGPT lineup, cut to WebP, animated as band-warp puppets | `src/cast/puppet.js`, `src/assets/cast/` |
-| Owners in stores | Waist-deep behind the counter, autonomy brain (ACTS). **3/4 view, not head-on yet** | `src/toon/interior.js` `drawOwner`, `src/main.js` `brainFor` |
+| Owners in stores | Supplied individual front portraits, anchored behind the counter, autonomy brain (ACTS) | `src/toon/interior.js` `drawOwner`, `src/main.js` `brainFor` |
 | Booster on the street | Walks, keeps lookout, counts cash, leans and hustles when you're near | `src/toon/street.js` booster brain (`bst`) |
 | Auctioneer, Hoss Hammerdome | **Placeholder**: gold-rimmed code silhouette | `src/toon/interior.js` `drawAuctioneer` |
 | Walking pedestrians | **Missing.** Blocked on `crowd.png` | §6.3 |

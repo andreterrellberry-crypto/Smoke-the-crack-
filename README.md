@@ -41,6 +41,7 @@ The cast and all nine street fronts use supplied hand-drawn art, embedded in the
 | Auction panel: the lot, live bid, clock, paddle, bid feed | `src/ui/auction.js` |
 | Cartoon toolkit (shapes, tubes, splines, lettering, palette) | `src/toon/toon.js` |
 | The cast: hand-drawn art in `src/assets/cast/`, played as cut-out puppets (lean, breathe, head tilt and nod, squash, stretch, hop, and a walk that parts the legs along their traced seam) with per-scene lighting | `src/cast/puppet.js` |
+| Front-facing counter portraits, individually cut from supplied PNGs; resting hands stay anchored | `art/*_front.png`, `src/assets/cast/*_front.webp`, `CAST[id].front` |
 | Melvin the stoop dog, the alley cat, pigeons | `src/cast/animals.js` |
 | Traffic | `src/toon/critters.js` |
 | Painted storefronts, alley and Hammerdome; source-pixel overlay anchors | `src/toon/environments.js`, `src/assets/env/*.json` |
