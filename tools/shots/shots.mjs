@@ -10,6 +10,7 @@
 // Sizes: desk 1440x900, wide 2560x1080, phone 390x844 @3x.
 // Needs Playwright: `npm i -D playwright && npx playwright install chromium` if it isn't installed.
 import { mkdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const url = arg('url', 'http://localhost:4173/');
@@ -21,10 +22,10 @@ const STORES = ['north-america', 'canada', 'south-america', 'europe', 'africa', 
 mkdirSync(out, { recursive: true });
 
 let chromium;
-try { ({ chromium } = await import('playwright')); } catch {
+try { ({ chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright')); } catch {
   try { ({ chromium } = await import('/opt/node-tools/node_modules/playwright/index.mjs')); } catch { console.error('Playwright not found: npm i -D playwright && npx playwright install chromium'); process.exit(2); }
 }
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {});
 let failed = false;
 
 async function page(size) {

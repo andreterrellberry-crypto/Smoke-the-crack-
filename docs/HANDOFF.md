@@ -2,6 +2,16 @@
 
 Read this whole document before you change any art or rendering code.
 
+### Exterior batch — October 14, 2026
+
+- All nine supplied fronts are now painted: seven stores, Booster alley and Hammerdome. PNG originals are preserved in `art/env/`; alpha-preserving WebP derivatives and measured JSON anchors live in `src/assets/env/`.
+- `src/toon/environments.js` loads the inline assets before the street tiles are built. It returns the existing facade contract and preserves live window inventory, OPEN neon, smoke, door entry, the van cargo and auction ticker. Original painters remain fallback paths.
+- Each JSON uses original source pixels, a `crop: [x,y,width,height]`, and a `ground` ordinate. Art and all anchors share one uniform scale (`segment width / crop width`). Roof and side colors are explicit measured overrides. Asia's side padding is trimmed at render time; the source PNG is unchanged. Africa and Oceania retain their actual delivered canvas sizes.
+- Portrait sources are taller than the old code fronts. The main tile extends to world y = -140, and the street view spans 470 vertical units; this preserves the roofs and dome without flattening the art. Existing world coordinates, character proportions, shopping logic and interiors remain intact.
+- Nine environment WebPs total 2,430,884 bytes at quality 85, with exact source alpha preserved. The production bundle remains under 6 MB, with inline cast and environment imports.
+- `tools/art/prepare_environments.py` rebuilds and checks the WebPs. `tools/shots/exteriors.mjs` photographs each front and taps every painted door on desktop and phone, alongside the original full scene checks.
+- Still missing: `owners_front.png`, `crowd.png`, `auctioneer.png`, pose sheets, painted interiors/counters and `van.png`. D1 is complete for front faces only; the remaining sections below describe the outstanding work and original architecture.
+
 The site works. Shopping, the bag, the auction, the Booster stash, the aerial intro and the walkable block are built and tested. What is left is mostly **art direction**: the cast is hand-drawn art, while everything around it is still drawn in code, and the two don't match. Your job is to close that gap without breaking the parts that work.
 
 ---
@@ -54,7 +64,7 @@ How to work with the owner:
 | Booster on the street | Walks, keeps lookout, counts cash, leans and hustles when you're near | `src/toon/street.js` booster brain (`bst`) |
 | Auctioneer, Hoss Hammerdome | **Placeholder**: gold-rimmed code silhouette | `src/toon/interior.js` `drawAuctioneer` |
 | Walking pedestrians | **Missing.** Blocked on `crowd.png` | §6.3 |
-| Store facades (7) + alley + Hammerdome | Code-drawn flat vector | `src/toon/facades.js` |
+| Store facades (7) + alley + Hammerdome | Supplied painted PNGs, shipped as inline WebP with live overlays | `src/toon/environments.js`, `src/assets/env/` |
 | Interiors, counters, trunk, auction hall | Code-drawn flat vector | `src/toon/interior.js` |
 | Street props, cars, dog, cat, pigeons | Code-drawn | `src/toon/facades.js`, `src/toon/critters.js`, `src/cast/animals.js` |
 | Garment icons (cards, windows, racks, bag) | Code-drawn by type, tinted per item | `src/toon/items.js` |

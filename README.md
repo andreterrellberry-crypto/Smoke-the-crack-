@@ -10,7 +10,7 @@ npm run dev      # local dev server
 npm run build    # static build → dist/ (deploy anywhere: Vercel, Netlify, S3)
 ```
 
-No images to download and no 3D engine: every building, person, car and garment is drawn in code with vector shapes, then rendered at your screen's real resolution. Building side walls and the two cross streets are re-projected every frame toward a vanishing point at the centre of the screen, so the block swings in 3D as you walk.
+The cast and all nine street fronts use supplied hand-drawn art, embedded in the portable bundle. Window merchandise, door transitions and the auction ticker remain live. No 3D engine is needed: building side walls and the two cross streets are re-projected every frame toward a vanishing point at the centre of the screen, so the block swings in 3D as you walk. Interiors, vehicles, props and garment icons still use the original canvas artwork.
 
 ## The block
 
@@ -43,7 +43,8 @@ No images to download and no 3D engine: every building, person, car and garment 
 | The cast: hand-drawn art in `src/assets/cast/`, played as cut-out puppets (lean, breathe, head tilt and nod, squash, stretch, hop, and a walk that parts the legs along their traced seam) with per-scene lighting | `src/cast/puppet.js` |
 | Melvin the stoop dog, the alley cat, pigeons | `src/cast/animals.js` |
 | Traffic | `src/toon/critters.js` |
-| Neighbourhood storefronts, the Hammerdome, the van, construction, street furniture | `src/toon/facades.js` |
+| Painted storefronts, alley and Hammerdome; source-pixel overlay anchors | `src/toon/environments.js`, `src/assets/env/*.json` |
+| Original facade fallbacks, the van, construction, street furniture | `src/toon/facades.js` |
 | Street engine: camera, perspective pass, cross streets, people, traffic, neon | `src/toon/street.js` |
 | Aerial intro | `src/toon/aerial.js` |
 | Store interiors, the trunk close-up, the auction hall | `src/toon/interior.js` |
@@ -51,10 +52,16 @@ No images to download and no 3D engine: every building, person, car and garment 
 | Marketplace panel, bag, search | `src/ui/market.js` |
 | Flow (intro → street → door → interior) | `src/main.js` |
 | Cut ChatGPT sheets into sprites, measure them | `tools/art/cut_sheet.py`, `tools/art/rulers.py` |
+| Convert preserved environment PNGs to WebP and verify alpha | `tools/art/prepare_environments.py` |
 | Screenshot every scene, fail on console errors | `tools/shots/shots.mjs` |
+| Screenshot all nine painted fronts and tap every entrance on desktop and phone | `tools/shots/exteriors.mjs` |
 
 ### Working on art
 Read `docs/HANDOFF.md` first (art pitfalls, disconnects, engine contracts, backlog). ChatGPT prompts for every sheet live in `art/PROMPTS.md`; agent rules in `AGENTS.md`.
+
+Original exteriors are preserved in `art/env/`. Run `python tools/art/prepare_environments.py` (Pillow required) to rebuild the alpha WebPs. JSON anchors use original source pixels; `crop` describes the framing rectangle, `ground` anchors the pavement, and the same uniform scale transforms the art and all overlays. Keep roof heights and side-wall colors measured from each front. The street reserves space above its ground layer so portrait buildings retain their proportions.
+
+For browser checks, install Playwright and Chromium as described in `tools/shots/shots.mjs`. Both runners also accept `PLAYWRIGHT_MODULE` (an absolute path to an existing Playwright entry module) and `PLAYWRIGHT_CHANNEL` (for example `chrome`) without adding runtime dependencies.
 
 ### Adding stock
 Add a city to `LOCATIONS`, items to `RAW`, and make sure the country is listed in one store's `countries`. Window displays, racks, counts and the directory all update on their own. Booster Corner stock lives in `BOOSTER_RAW` (retail price, then the booster's price), and auction lots in `AUCTION_RAW` (estimate low and high, then the opening bid).

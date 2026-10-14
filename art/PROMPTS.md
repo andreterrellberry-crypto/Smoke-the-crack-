@@ -7,7 +7,8 @@ If a result drifts from the lineup, reply "match the cast lineup exactly" and re
 Status:
 - **Done:** Prompt 1, which produced `art/cast_lineup.png`.
 - **Requested but not received yet:** Prompt 2 (auctioneer, crowd, head-on owners).
-- **Not yet given to the owner:** Prompt 3 (environments).
+- **Received and integrated:** Prompt 3 A, all seven storefronts, Booster alley and Hammerdome. Original PNGs are in `art/env/`; the duplicate Ura-Hara attachment was used only once.
+- **Still needed:** Prompt 3 B–H (van, rooms, counters, auction interior and optional props).
 
 ---
 
@@ -103,9 +104,9 @@ Each crowd outfit matches a real stock item in `src/data/inventory.js`, so tappi
 
 ---
 
-## Prompt 3 (not given yet): environments in the same style
+## Prompt 3 (A received; B–H pending): environments in the same style
 
-This prompt is the biggest open gap. The environments are still drawn in code as flat vector cartoon (see `docs/HANDOFF.md` §4 D1). Every size, ground line and "leave this empty" instruction below exists so the art drops into the engine's coordinate system without hand-fixing.
+The exterior batch A is integrated. Rooms, counters and the van remain the next environment-art gap (see `docs/HANDOFF.md` §4 D1). Every size, ground line and "leave this empty" instruction below exists so the art drops into the engine's coordinate system without hand-fixing.
 
 ```
 Same chat, same MAD Magazine / MAD animated-series style as the cast lineup: thick hand-inked uneven black lines, flat saturated cel colors, one hard cel-shadow tone, light from the upper left, grimy funny details (cracks, tags, gum, pigeons' mess). NO PEOPLE OR ANIMALS in any of these. Make them ONE AT A TIME; after each, write the file name and wait for NEXT.

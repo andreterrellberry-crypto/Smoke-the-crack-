@@ -2,6 +2,7 @@ import './style.css';
 import { STORES, BOOSTER_ITEMS, AUCTION_LOTS, STORE_BY_ID, COUNT_BY_STORE, itemsForScope, isOpen } from './data/inventory.js';
 import { ensureFonts } from './toon/toon.js';
 import { loadCast } from './cast/puppet.js';
+import { loadEnvironments } from './toon/environments.js';
 import { createStreet } from './toon/street.js';
 import { buildAerial, topCar, topPerson, AH } from './toon/aerial.js';
 import { buildRoom, buildCounter, buildOwner, drawOwner, ownerBand, buildTrunkScene, buildTrunkActor, drawBoosterBust, portrait, roomR, RW, RH, TW, TH, OWNER_X, AW, AH2, buildAuctionHall, buildPodium, drawAuctionLive, drawAudience, auctioneerPortrait } from './toon/interior.js';
@@ -20,7 +21,7 @@ const itemsByStore = Object.fromEntries(STORES.map((s) => [s.id, itemsForScope({
 const openById = Object.fromEntries(STORES.map((s) => [s.id, isOpen(s)]));
 
 // canvas lettering needs the cartoon fonts in before anything is drawn
-await Promise.all([loadCast(), ensureFonts(["'Alfa Slab One'", "'Bowlby One'", "700 'Fredoka'", "'Pacifico'", "'Bungee'", "'Rubik Bubbles'", ["900 'Noto Sans JP'", '古着祭ニセモノ禁止']])]);
+await Promise.all([loadCast(), loadEnvironments(), ensureFonts(["'Alfa Slab One'", "'Bowlby One'", "700 'Fredoka'", "'Pacifico'", "'Bungee'", "'Rubik Bubbles'", ["900 'Noto Sans JP'", '古着祭ニセモノ禁止']])]);
 document.body.classList.add('toon');
 
 // show-style title card that slams in while the camera dives through a door

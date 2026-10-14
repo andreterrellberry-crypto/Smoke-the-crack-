@@ -5,6 +5,7 @@ import { FACADES, SW, ALLEY_W, AUC_W, paintAuctionHouse, construction, paintBoos
 import { pigeonFrames, catFrames, dogFrames } from '../cast/animals.js';
 import { drawPuppet, puppet, castPx, LIGHT } from '../cast/puppet.js';
 import { carFrames, carType } from './critters.js';
+import { paintEnvironment } from './environments.js';
 
 export const MAIN_H = 268;
 export const G = 192; // building line
@@ -18,7 +19,8 @@ const ZS = 16; // depth of the buildings on our row
 export const CROSS_W = 150;
 const SPX = 0.1; // world units per lineup pixel: the cast keeps its relative heights on the street
 const castH = (id) => castPx(id) * SPX;
-const VIEW_H = 285;
+// The supplied fronts keep their aspect ratios, including the tall Shinjuku roof and gold dome.
+const VIEW_H = 470;
 const uiTop = () => (innerWidth > 820 ? 122 : 162);
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 export const pickR = () => Math.max(2, Math.min(5, Math.ceil(Math.min(innerHeight / VIEW_H, innerWidth / 170) * (devicePixelRatio || 1))));
@@ -39,18 +41,18 @@ export function buildLayout(stores) {
 }
 
 // A wide layer split into <=4000px tiles; each painter is seeded so a painter straddling two tiles draws identically in both
-function tiled(W, H, R, painters) {
+function tiled(W, H, R, painters, top = 0) {
   const tw = Math.floor(4000 / R);
   const tiles = [];
   for (let x0 = 0; x0 < W; x0 += tw - 2) {
     const w = Math.min(tw, W - x0);
-    const [c, ctx] = layer(w, H, R);
-    ctx.translate(-x0, 0);
+    const [c, ctx] = layer(w, H - top, R);
+    ctx.translate(-x0, -top);
     for (const p of painters) if (p.x1 >= x0 && p.x0 <= x0 + w) { ctx.save(); p.fn(ctx, rng(p.seed)); ctx.restore(); }
     tiles.push({ c, x: x0, w });
     if (x0 + w >= W) break;
   }
-  return { draw(ctx, sx, y, viewW) { for (const t of tiles) if (t.x < sx + viewW && t.x + t.w > sx) ctx.drawImage(t.c, t.x - sx, y, t.c.uw, t.c.uh); } };
+  return { draw(ctx, sx, y, viewW) { for (const t of tiles) if (t.x < sx + viewW && t.x + t.w > sx) ctx.drawImage(t.c, t.x - sx, y + top, t.c.uw, t.c.uh); } };
 }
 function sprite(w, h, R, fn, seed = 3) {
   const [c, ctx] = layer(w, h, R);
@@ -126,11 +128,11 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
         res = { roofL: HOR, roofR: HOR };
       } else {
         sidewalk(m, rr, seg.x, seg.x + seg.w);
-        if (seg.kind === 'alley') res = paintBoosterCorner(m, seg.x, G, rr, boosterItems, R);
-        else if (seg.kind === 'auction') res = paintAuctionHouse(m, seg.x, G, rr, R);
+        if (seg.kind === 'alley') res = paintEnvironment(m, 'alley', seg.x, G, seg.w, R, boosterItems, rr) || paintBoosterCorner(m, seg.x, G, rr, boosterItems, R);
+        else if (seg.kind === 'auction') res = paintEnvironment(m, 'auction', seg.x, G, seg.w, R) || paintAuctionHouse(m, seg.x, G, rr, R);
         else {
           const st = stores.find((s) => s.id === seg.id);
-          res = FACADES[st.id](m, seg.x, G, rr, itemsByStore[st.id], R);
+          res = paintEnvironment(m, st.id, seg.x, G, seg.w, R, itemsByStore[st.id]) || FACADES[st.id](m, seg.x, G, rr, itemsByStore[st.id], R);
           if (!openById[st.id]) construction(m, seg.x, G, res, st, rr);
         }
       }
@@ -147,7 +149,7 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
     const ic = segOf('north-america').x + 130;
     oval(m, ic, 211.4, 3.8, 1.3, C.hotpink, 0.6); poly(m, [[ic + 2, 210.8], [ic + 7, 209], [ic + 6.6, 211.4]], '#e0a060', 0.5);
   } });
-  const main = tiled(W, MAIN_H, R, painters);
+  const main = tiled(W, MAIN_H, R, painters, -140);
   const doors = {}, tops = {}, neon = [];
   const fx = { steam: [], smoke: [] };
   let alleyInfo = null, auctionInfo = null, laundry = null;
@@ -542,7 +544,8 @@ export function createStreet({ cv, stores, itemsByStore, openById, countById, bo
   function drawTicker(cx) {
     const { ticker: tk, bulbs } = auctionInfo;
     const chase = Math.floor(t * 8);
-    bulbs.forEach(([bx, by], i) => oval(ctx, bx - cx, oy + by, 1.3, 1.3, (i >> 1) % 3 === chase % 3 ? '#7a5a20' : '#fff3a0', 0.4));
+    const br = auctionInfo.bulbRadius || 1.3;
+    bulbs.forEach(([bx, by], i) => oval(ctx, bx - cx, oy + by, br, br, (i >> 1) % 3 === chase % 3 ? '#7a5a20' : '#fff3a0', 0.4));
     const s = auction?.state;
     if (!s) return;
     const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
